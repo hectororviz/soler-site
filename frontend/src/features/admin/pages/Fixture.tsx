@@ -61,6 +61,9 @@ export function FixtureAdminPage() {
 
   const refresh = ['admin-matchdays'];
 
+  const playing = new Set((selected?.matches ?? []).flatMap((m) => [m.homeClub.id, m.awayClub.id]));
+  const libres = (parts.data ?? []).map((p) => p.club).filter((c) => !playing.has(c.id));
+
   const createDay = () => {
     if (!active || !newLabel.trim()) return;
     setPending(true);
@@ -85,6 +88,15 @@ export function FixtureAdminPage() {
       () => api.patch(`/admin/matchdays/${selected.id}/publish`, { published }, { admin: true }),
       refresh,
     );
+  };
+
+  const secondLeg = () => {
+    if (!active) return;
+    setPending(true);
+    w.run(
+      () => api.post(`/admin/tournaments/${active.id}/fixture/second-leg`, {}, { admin: true }),
+      refresh,
+    ).finally(() => setPending(false));
   };
 
   const saveCategory = (catId: string, data: { kickoff?: string; venue?: string; status?: string }) => {
@@ -140,6 +152,12 @@ export function FixtureAdminPage() {
                 <li className="text-sm text-ink-muted">Sin fechas. Creá la primera arriba.</li>
               )}
             </ul>
+            <div className="mt-3">
+              <ConfirmButton onConfirm={secondLeg} confirmLabel="¿Generar la segunda rueda espejada?">
+                Generar segunda rueda
+              </ConfirmButton>
+              <FormError message={w.error} />
+            </div>
           </Panel>
 
           <Panel
@@ -174,6 +192,11 @@ export function FixtureAdminPage() {
                   </Field>
                 </InlineForm>
                 <FormError message={w.error} />
+                {libres.length > 0 && selected && selected.matches.length > 0 && (
+                  <p className="mt-3 text-sm text-ink-muted">
+                    Libre: <span className="font-semibold text-ink">{libres.map((c) => c.shortName).join(', ')}</span>
+                  </p>
+                )}
                 <div className="mt-4 space-y-3">
                   {selected.matches.map((m) => (
                     <ClashEditor

@@ -204,6 +204,11 @@ export function FixturePage() {
 
           <div className="mt-4 grid gap-3">
             {round?.matches.map((m) => <ClashCard key={m.id} clash={m} />)}
+            {(round?.libre ?? []).length > 0 && (
+              <p className="rounded-card border border-dashed border-line bg-white px-4 py-3 text-center text-sm text-ink-muted">
+                Libre: <span className="font-semibold text-ink">{(round?.libre ?? []).map((c) => c.shortName).join(', ')}</span>
+              </p>
+            )}
           </div>
           <p className="mt-6 text-center text-sm text-ink-muted">
             <Link to="/resultados" className="font-semibold text-primary hover:underline">Ver resultados oficiales</Link>

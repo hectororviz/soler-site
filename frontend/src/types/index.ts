@@ -145,6 +145,8 @@ export interface FixtureRound {
   order: number;
   published: boolean;
   matches: FixtureClash[];
+  /** Inscriptos que descansan en esta fecha (torneos impares). */
+  libre?: Club[];
 }
 
 export type ApiErrorKind = 'network' | 'timeout' | 'http' | 'unavailable';

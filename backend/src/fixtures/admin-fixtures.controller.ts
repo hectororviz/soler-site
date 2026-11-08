@@ -51,6 +51,11 @@ export class AdminFixturesController {
     return this.fixtures.removeFixtureMatch(id);
   }
 
+  @Post('tournaments/:id/fixture/second-leg')
+  secondLeg(@Param('id') id: string) {
+    return this.fixtures.generateSecondLeg(id);
+  }
+
   @Patch('matchdays/:id/publish')
   publish(@Param('id') id: string, @Body() dto: PublishDto) {
     return this.fixtures.publishMatchday(id, dto.published);

@@ -99,6 +99,50 @@ export class FixturesService {
     });
   }
 
+  // ---------- Segunda rueda: espeja las fechas existentes ----------
+  /**
+   * Genera la segunda rueda espejando las fechas actuales del torneo
+   * (local/visitante invertidos, misma cantidad de fechas).
+   * Copia la sede de cada encuentro; horario y estado arrancan frescos.
+   * No toca las fechas existentes.
+   */
+  async generateSecondLeg(tournamentId: string) {
+    const t = await this.prisma.tournament.findUnique({ where: { id: tournamentId } });
+    if (!t) throw new NotFoundException('Torneo inexistente.');
+    const days = await this.prisma.matchday.findMany({
+      where: { tournamentId },
+      orderBy: { order: 'asc' },
+      include: { matches: { orderBy: { createdAt: 'asc' }, include: { categories: true } } },
+    });
+    if (!days.length) throw new BadRequestException('No hay fechas para espejar.');
+    let maxNum = 0;
+    for (const d of days) {
+      const m = /^Fecha\s+(\d+)/i.exec(d.label);
+      if (m) maxNum = Math.max(maxNum, parseInt(m[1], 10));
+    }
+    let maxOrder = Math.max(...days.map((d) => d.order));
+    const createdIds: string[] = [];
+    for (const d of days) {
+      maxNum += 1;
+      maxOrder += 1;
+      const label = /^Fecha\s+\d+/i.test(d.label)
+        ? d.label.replace(/^Fecha\s+\d+/i, `Fecha ${maxNum}`)
+        : `${d.label} (Vuelta)`;
+      const next = await this.prisma.matchday.create({ data: { tournamentId, label, order: maxOrder } });
+      for (const m of d.matches) {
+        const mirrored = await this.createFixtureMatch(next.id, m.awayClubId, m.homeClubId);
+        for (const cm of (mirrored as any).categories ?? []) {
+          const src = m.categories.find((c) => c.categoryId === cm.categoryId);
+          if (src?.venue) {
+            await this.prisma.categoryMatch.update({ where: { id: cm.id }, data: { venue: src.venue } });
+          }
+        }
+      }
+      createdIds.push(next.id);
+    }
+    return this.prisma.matchday.findMany({ where: { id: { in: createdIds } }, ...this.detail() });
+  }
+
   async updateCategoryMatch(id: string, data: { kickoff?: string; venue?: string; status?: string }) {
     if (data.status && !['PROGRAMADO', 'PROXIMO', 'EN_VIVO', 'FINALIZADO', 'SUSPENDIDO'].includes(data.status)) {
       throw new BadRequestException('Estado inválido.');
@@ -118,7 +162,7 @@ export class FixturesService {
   }
 
   // ---------- Lectura pública (solo fechas publicadas) ----------
-  private shape(matchday: any, solerFirst = false) {
+  private shape(matchday: any, participantClubs: any[] = [], solerFirst = false) {
     const matches = (matchday.matches ?? []).map((m: any) => ({
       id: m.id,
       roundId: matchday.id,
@@ -140,7 +184,14 @@ export class FixturesService {
       })),
     }));
     if (solerFirst) matches.sort((a: any, b: any) => Number(b.isSoler) - Number(a.isSoler));
-    return { id: matchday.id, label: matchday.label, order: matchday.order, published: matchday.published, matches };
+    // Libre: inscriptos que no juegan en esta fecha (torneos con cantidad impar).
+    const playing = new Set<string>();
+    for (const m of matchday.matches ?? []) {
+      if (m.homeClubId) playing.add(m.homeClubId);
+      if (m.awayClubId) playing.add(m.awayClubId);
+    }
+    const libre = participantClubs.filter((c: any) => !playing.has(c.id)).map(toPublicClub);
+    return { id: matchday.id, label: matchday.label, order: matchday.order, published: matchday.published, matches, libre };
   }
 
   private matchInclude() {
@@ -170,7 +221,19 @@ export class FixturesService {
       where.tournamentId = t.id;
     }
     const days = await this.prisma.matchday.findMany({ where, ...this.detail() });
-    let shaped = days.map((d: any) => this.shape(d));
+    const tids = [...new Set(days.map((d) => d.tournamentId))];
+    const parts = tids.length
+      ? await this.prisma.tournamentParticipant.findMany({
+          where: { tournamentId: { in: tids } },
+          include: { club: true },
+        })
+      : [];
+    const byT = new Map<string, any[]>();
+    for (const p of parts) {
+      if (!byT.has(p.tournamentId)) byT.set(p.tournamentId, []);
+      byT.get(p.tournamentId)!.push(p.club);
+    }
+    let shaped = days.map((d: any) => this.shape(d, byT.get(d.tournamentId) ?? []));
     if (categorySlug) {
       shaped = shaped
         .map((d: any) => ({
@@ -188,7 +251,7 @@ export class FixturesService {
     const days = await this.prisma.matchday.findMany({ where: { published: true }, ...this.detail() });
     const out: any[] = [];
     for (const d of days) {
-      for (const m of this.shape(d, true).matches) {
+      for (const m of this.shape(d, [], true).matches) {
         for (const c of m.categories) {
           if (['PROGRAMADO', 'PROXIMO'].includes(c.status)) {
             out.push({
