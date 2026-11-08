@@ -1,5 +1,5 @@
 name: csd-soler-prod
-# Producción en VPS con caddy-docker-proxy (red externa caddy-net).
+# Producción en VPS con caddy-docker-proxy (red externa caddy_net).
 # Las imágenes vienen de GHCR (CI las publica). Variables en .env del VPS.
 # Nunca bindea 80/443: Caddy descubre los servicios por labels.
 
@@ -39,7 +39,7 @@ services:
       - uploads:/app/uploads
     networks:
       - internal
-      - caddy-net
+      - caddy_net
     labels:
       caddy: api.csdsoler.com.ar
       caddy.reverse_proxy: "{{upstreams 3000}}"
@@ -55,7 +55,7 @@ services:
     depends_on:
       - backend
     networks:
-      - caddy-net
+      - caddy_net
     labels:
       caddy: csdsoler.com.ar
       caddy.reverse_proxy: "{{upstreams 80}}"
@@ -65,7 +65,7 @@ volumes:
   uploads:
 
 networks:
-  caddy-net:
+  caddy_net:
     external: true
-    name: caddy-net
+    name: caddy_net
   internal:

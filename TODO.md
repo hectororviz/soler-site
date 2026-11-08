@@ -20,7 +20,7 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 - [x] **Fixture público funcional** contra API real: filtros torneo/categoría en URL, navegación
   de fechas, expansión por categoría, destaque Soler, compartir enlace, default al torneo con datos.
 - [x] **Infra**: `Dockerfile` backend/frontend, `docker-compose.yml` local,
-  `docker-compose.prod.yml` (red externa `caddy-net`, labels caddy-docker-proxy),
+  `docker-compose.prod.yml` (red externa `caddy_net`, labels caddy-docker-proxy),
   CI a GHCR (`.github/workflows/ci.yml`), `docs/DEPLOY.md`.
 - [x] **Verificado local**: login, seed, crear fecha → 10 encuentros auto → duplicado 400 →
   publicar → lectura pública `isSoler:true`; 503 honesto en resultados/posiciones; 401 sin token.

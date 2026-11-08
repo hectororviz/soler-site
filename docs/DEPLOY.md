@@ -1,7 +1,7 @@
-# Despliegue en VPS (caddy-docker-proxy, red `caddy-net`)
+# Despliegue en VPS (caddy-docker-proxy, red `caddy_net`)
 
 ## Requisitos previos
-- VPS con `caddy-docker-proxy` corriendo y red externa `caddy-net` (`docker network ls`).
+- VPS con `caddy-docker-proxy` corriendo y red externa `caddy_net` (`docker network ls`).
 - DNS `*.csdsoler.com.ar` apuntando al VPS (ya configurado).
 - Repo público clonado en el VPS. Imágenes en GHCR (las publica CI en cada push a `main`).
 

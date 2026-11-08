@@ -8,7 +8,7 @@ Punto central de fixture, resultados, posiciones y transmisiones.
 - `frontend/` — React + Vite + TS + Tailwind. Solo consume la API propia.
 - `backend/` — NestJS + Prisma 6 + PostgreSQL. API versionada `/api/v1`.
 - `docker-compose.yml` — desarrollo local (postgres + backend + frontend).
-- `docker-compose.prod.yml` — VPS con caddy-docker-proxy (red externa `caddy-net`).
+- `docker-compose.prod.yml` — VPS con caddy-docker-proxy (red externa `caddy_net`).
 - `docs/` — contrato de API (`FRONTEND-API-CONTRACT.md`), despliegue (`DEPLOY.md`).
 - `TODO.md` — estado del proyecto y pasos siguientes.
 
