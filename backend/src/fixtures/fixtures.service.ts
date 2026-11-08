@@ -248,15 +248,19 @@ export class FixturesService {
   }
 
   async upcoming(limit = 6) {
-    const days = await this.prisma.matchday.findMany({ where: { published: true }, ...this.detail() });
+    const days = await this.prisma.matchday.findMany({
+      where: { published: true },
+      include: { tournament: true, ...this.matchInclude() },
+      orderBy: { order: 'asc' },
+    });
     const out: any[] = [];
     for (const d of days) {
       for (const m of this.shape(d, [], true).matches) {
         for (const c of m.categories) {
-          if (['PROGRAMADO', 'PROXIMO'].includes(c.status)) {
+          if (['PROGRAMADO', 'PROXIMO'].includes(c.status) && c.kickoff) {
             out.push({
               id: `${m.id}:${c.id}`,
-              tournamentName: d.label,
+              tournamentName: (d as any).tournament?.name ?? d.label,
               categoryName: c.categoryName,
               roundLabel: d.label,
               home: m.home,
@@ -268,12 +272,12 @@ export class FixturesService {
               status: c.status === 'PROXIMO' ? 'PROXIMO' : 'PROGRAMADO',
               hasBroadcast: !!c.broadcastId,
             });
-            if (out.length >= limit) return out;
           }
         }
       }
     }
-    return out;
+    out.sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());
+    return out.slice(0, limit);
   }
 
   // ---------- Resultados y posiciones: fuente Ligas Deportivas (Etapa 3) ----------

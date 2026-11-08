@@ -291,7 +291,14 @@ function ClashEditor({ clash, onSave, onRemove }: {
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="font-semibold">{c.category?.name}</span>
                 <span className="text-ink-muted">{formatKickoff(c.kickoff)}{c.venue ? ` · ${c.venue}` : ''} · {c.status}</span>
-                <button onClick={() => start(c)} className="font-semibold text-primary hover:underline">Editar</button>
+                <span className="inline-flex gap-2">
+                  <button onClick={() => start(c)} className="font-semibold text-primary hover:underline">Editar</button>
+                  {c.status !== 'FINALIZADO' ? (
+                    <button onClick={() => onSave(c.id, { status: 'FINALIZADO' })} className="font-semibold text-primary hover:underline">Marcar jugado</button>
+                  ) : (
+                    <button onClick={() => onSave(c.id, { status: 'PROGRAMADO' })} className="font-semibold text-primary hover:underline">Reabrir</button>
+                  )}
+                </span>
               </div>
             )}
           </li>

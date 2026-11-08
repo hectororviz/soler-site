@@ -18,7 +18,8 @@ export function MatchCard({ match, highlightSoler = true }: { match: MatchSummar
     >
       <div className="flex items-center justify-between gap-2 text-[13px] text-ink-muted">
         <span>
-          {match.tournamentName} · {match.categoryName} · {match.roundLabel}
+          <span className="mr-1 inline-flex items-center rounded-full bg-pitch px-2 py-0.5 font-bold text-white">{match.tournamentName}</span>
+          {match.categoryName} · {match.roundLabel}
         </span>
         <MatchStatusBadge status={match.status} />
       </div>
