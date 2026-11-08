@@ -107,6 +107,13 @@ export const apiOrigin = BASE.replace(/\/api\/v\d+$/, '') || '';
 export function resolveCrest(path: string | null): string | null {
   if (!path) return null;
   if (/^https?:\/\//.test(path)) return path;
+  if (path.startsWith('/api/v1/files/') && apiOrigin) return `${apiOrigin}${path}`;
   if (path.startsWith('/files/') && apiOrigin) return `${apiOrigin}${path}`;
   return path;
+}
+
+/** Acepta payloads con `crestUrl` (nuevo) o `crestPath` (histórico de la DB). */
+export function clubCrest(raw: { crestUrl?: string | null; crestPath?: string | null } | null | undefined): string | null {
+  if (!raw) return null;
+  return resolveCrest(raw.crestUrl ?? raw.crestPath ?? null);
 }

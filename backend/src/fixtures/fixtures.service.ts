@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { toPublicClub } from '../catalog/club-mapper';
 
 const isSolerClub = (c: any) =>
   c && [c.slug, c.shortName, c.name].some((v: string) => v?.toLowerCase().includes('soler'));
@@ -72,12 +73,12 @@ export class FixturesService {
     if (existing) throw new BadRequestException('Enfrentamiento duplicado en esta fecha.');
 
     // Intersección de categorías habilitadas (vacío = todas).
-    const byClub = new Map(parts.map((p) => [p.clubId, p.categoryIds]));
-    const home = byClub.get(homeClubId) ?? [];
-    const away = byClub.get(awayClubId) ?? [];
-    const all = matchday.tournament.categories.map((c) => c.id);
+    const byClub = new Map<string, string[]>(parts.map((p: any) => [p.clubId, p.categoryIds] as [string, string[]]));
+    const home: string[] = byClub.get(homeClubId) ?? [];
+    const away: string[] = byClub.get(awayClubId) ?? [];
+    const all = matchday.tournament.categories.map((c: any) => c.id);
     const enabled = all.filter(
-      (id) => (home.length === 0 || home.includes(id)) && (away.length === 0 || away.includes(id)),
+      (id: any) => (home.length === 0 || home.includes(id)) && (away.length === 0 || away.includes(id)),
     );
     if (!enabled.length) throw new BadRequestException('Los clubes no comparten categorías habilitadas.');
 
@@ -86,7 +87,7 @@ export class FixturesService {
         matchdayId,
         homeClubId,
         awayClubId,
-        categories: { create: enabled.map((categoryId) => ({ categoryId })) },
+        categories: { create: enabled.map((categoryId: any) => ({ categoryId })) },
       },
       include: { categories: { include: { category: true } }, homeClub: true, awayClub: true },
     });
@@ -117,8 +118,8 @@ export class FixturesService {
       roundId: matchday.id,
       roundLabel: matchday.label,
       tournamentId: matchday.tournamentId,
-      home: m.homeClub,
-      away: m.awayClub,
+      home: toPublicClub(m.homeClub),
+      away: toPublicClub(m.awayClub),
       isSoler: isSolerClub(m.homeClub) || isSolerClub(m.awayClub),
       categories: (m.categories ?? []).map((c: any) => ({
         id: c.id,
@@ -163,7 +164,7 @@ export class FixturesService {
       where.tournamentId = t.id;
     }
     const days = await this.prisma.matchday.findMany({ where, ...this.detail() });
-    let shaped = days.map((d) => this.shape(d));
+    let shaped = days.map((d: any) => this.shape(d));
     if (categorySlug) {
       shaped = shaped
         .map((d: any) => ({

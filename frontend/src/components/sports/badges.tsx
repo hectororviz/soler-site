@@ -1,5 +1,5 @@
 import { cn } from '../../lib/utils';
-import { resolveCrest } from '../../services/api';
+import { clubCrest } from '../../services/api';
 import type { BroadcastStatus, Club, MatchStatus } from '../../types';
 
 /* ---------- ClubBadge ---------- */
@@ -13,7 +13,7 @@ export function ClubBadge({
   showName?: boolean;
 }) {
   const box = size === 'lg' ? 'h-14 w-14 text-lg' : size === 'sm' ? 'h-9 w-9 text-xs' : 'h-11 w-11 text-sm';
-  const src = resolveCrest(club.crestUrl);
+  const src = clubCrest(club);
   return (
     <span className="inline-flex items-center gap-2">
       {src ? (

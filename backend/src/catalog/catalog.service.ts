@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { toPublicClub } from './club-mapper';
 
 function slugify(input: string): string {
   return input
@@ -59,25 +60,29 @@ export class CatalogService {
   }
 
   // ---- Clubs ----
-  clubs() {
-    return this.prisma.club.findMany({ orderBy: { name: 'asc' } });
+  async clubs() {
+    const rows = await this.prisma.club.findMany({ orderBy: { name: 'asc' } });
+    return rows.map(toPublicClub);
   }
-  createClub(data: { name: string; shortName: string; slug?: string; externalId?: string; crestPath?: string }) {
-    return this.prisma.club.create({ data: { ...data, slug: data.slug ?? slugify(data.shortName) } });
+  async createClub(data: { name: string; shortName: string; slug?: string; externalId?: string; crestPath?: string }) {
+    const row = await this.prisma.club.create({ data: { ...data, slug: data.slug ?? slugify(data.shortName) } });
+    return toPublicClub(row);
   }
-  updateClub(id: string, data: Partial<{ name: string; shortName: string; externalId: string; crestPath: string }>) {
-    return this.prisma.club.update({ where: { id }, data }).catch(() => {
+  async updateClub(id: string, data: Partial<{ name: string; shortName: string; externalId: string; crestPath: string }>) {
+    const row = await this.prisma.club.update({ where: { id }, data }).catch(() => {
       throw new NotFoundException('Club inexistente.');
     });
+    return toPublicClub(row);
   }
 
   // ---- Participants ----
-  participants(tournamentId: string) {
-    return this.prisma.tournamentParticipant.findMany({
+  async participants(tournamentId: string) {
+    const rows = await this.prisma.tournamentParticipant.findMany({
       where: { tournamentId },
       include: { club: true },
       orderBy: { club: { name: 'asc' } },
     });
+    return rows.map((p: any) => ({ ...p, club: toPublicClub(p.club) }));
   }
   async addParticipant(tournamentId: string, clubId: string, categoryIds: string[] = []) {
     const [t, c] = await Promise.all([

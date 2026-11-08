@@ -1,5 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { toPublicClub } from '../catalog/club-mapper';
 
 const VALID = ['PROGRAMADA', 'EN_VIVO', 'FINALIZADA', 'INTERRUMPIDA'];
 
@@ -19,7 +20,7 @@ export class BroadcastsService {
           },
         },
       },
-    }).then((b) => {
+    }).then((b: any) => {
       if (!b) return null;
       const cm = b.categoryMatch;
       return {
@@ -28,8 +29,8 @@ export class BroadcastsService {
         matchId: cm.fixtureMatchId,
         tournamentName: cm.fixtureMatch.matchday.tournament.name,
         categoryName: cm.category.name,
-        home: cm.fixtureMatch.homeClub,
-        away: cm.fixtureMatch.awayClub,
+        home: toPublicClub(cm.fixtureMatch.homeClub),
+        away: toPublicClub(cm.fixtureMatch.awayClub),
         kickoff: cm.kickoff,
         streamUrl: b.streamUrl,
         embedUrl: b.embedUrl,

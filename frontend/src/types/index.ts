@@ -12,6 +12,8 @@ export interface Club {
   name: string;
   shortName: string;
   crestUrl: string | null;
+  /** Alias histórico del backend (DB `crestPath`). El frontend acepta ambos. */
+  crestPath?: string | null;
   /** ID externo Ligas Deportivas, cuando corresponda. Nunca matchear solo por nombre. */
   externalId?: string | null;
 }
