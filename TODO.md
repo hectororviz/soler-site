@@ -30,7 +30,7 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 ## Pendiente (en orden)
 
 ### 1. Repo remoto + primer deploy
-- [ ] Crear repo público en GitHub, `git init` + push (NO subir `.env`).
+- [x] Crear repo público en GitHub (`hectororviz/soler-site`), `git init` + push (sin `.env`).
 - [ ] Verificar CI en verde (build + imágenes GHCR).
 - [ ] En VPS: clonar, crear `.env` real, `docker compose -f docker-compose.prod.yml up -d`.
 - [ ] Verificar `https://csdsoler.com.ar` y `/api/v1/health`. Cambiar `ADMIN_PASSWORD`. `SEED_ON_BOOT=false`.
