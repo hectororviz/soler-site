@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Patch, Delete, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { FixturesService } from './fixtures.service';
 import { AdminGuard } from '../auth/admin.guard';
@@ -44,6 +44,11 @@ export class AdminFixturesController {
   @Post('matchdays/:id/matches')
   createMatch(@Param('id') id: string, @Body() dto: FixtureMatchDto) {
     return this.fixtures.createFixtureMatch(id, dto.homeClubId, dto.awayClubId);
+  }
+
+  @Delete('matches/:id')
+  removeMatch(@Param('id') id: string) {
+    return this.fixtures.removeFixtureMatch(id);
   }
 
   @Patch('matchdays/:id/publish')

@@ -93,6 +93,12 @@ export class FixturesService {
     });
   }
 
+  removeFixtureMatch(id: string) {
+    return this.prisma.fixtureMatch.delete({ where: { id } }).catch(() => {
+      throw new NotFoundException('Cruce inexistente.');
+    });
+  }
+
   async updateCategoryMatch(id: string, data: { kickoff?: string; venue?: string; status?: string }) {
     if (data.status && !['PROGRAMADO', 'PROXIMO', 'EN_VIVO', 'FINALIZADO', 'SUSPENDIDO'].includes(data.status)) {
       throw new BadRequestException('Estado inválido.');

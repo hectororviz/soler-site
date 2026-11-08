@@ -91,6 +91,10 @@ export function FixtureAdminPage() {
     w.run(() => api.patch(`/admin/category-matches/${catId}`, data, { admin: true }), refresh);
   };
 
+  const removeMatch = (matchId: string) => {
+    w.run(() => api.del(`/admin/matches/${matchId}`, { admin: true }), refresh);
+  };
+
   return (
     <AdminPage
       title="Fixture"
@@ -176,6 +180,7 @@ export function FixtureAdminPage() {
                       key={m.id}
                       clash={m}
                       onSave={saveCategory}
+                      onRemove={() => removeMatch(m.id)}
                     />
                   ))}
                   {selected.matches.length === 0 && (
@@ -193,10 +198,12 @@ export function FixtureAdminPage() {
   );
 }
 
-function ClashEditor({ clash, onSave }: {
+function ClashEditor({ clash, onSave, onRemove }: {
   clash: DetailClash;
   onSave: (catId: string, data: { kickoff?: string; venue?: string; status?: string }) => void;
+  onRemove: () => void;
 }) {
+  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [kickoff, setKickoff] = useState('');
   const [venue, setVenue] = useState('');
@@ -221,13 +228,20 @@ function ClashEditor({ clash, onSave }: {
 
   return (
     <article className="rounded-card border border-line p-3">
-      <div className="flex items-center gap-2 font-semibold">
+      <div className="flex flex-wrap items-center gap-2 font-semibold">
         {clash.homeClub.crestPath && <img src={resolveCrest(clash.homeClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" />}
         {clash.homeClub.shortName}
         <span className="text-ink-muted">vs</span>
         {clash.awayClub.shortName}
         {clash.awayClub.crestPath && <img src={resolveCrest(clash.awayClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" />}
+        <span className="ml-auto inline-flex items-center gap-2">
+          <button onClick={() => setOpen((v) => !v)} className="text-sm font-semibold text-primary hover:underline">
+            {open ? 'Ocultar categorías' : `Ver categorías (${clash.categories.length})`}
+          </button>
+          <ConfirmButton onConfirm={onRemove}>Eliminar cruce</ConfirmButton>
+        </span>
       </div>
+      {open && (
       <ul className="mt-2 divide-y divide-line">
         {clash.categories.map((c) => (
           <li key={c.id} className="py-2">
@@ -260,6 +274,7 @@ function ClashEditor({ clash, onSave }: {
           </li>
         ))}
       </ul>
+      )}
     </article>
   );
 }
