@@ -19,9 +19,20 @@ export class FixturesService {
     });
   }
 
+  /** Detalle completo para administración (incluye fechas NO publicadas). */
+  adminMatchdays(tournamentId: string) {
+    return this.prisma.matchday.findMany({ where: { tournamentId }, ...this.detail() });
+  }
+
+  adminMatchday(id: string) {
+    return this.prisma.matchday.findUnique({ where: { id }, include: this.matchInclude() });
+  }
+
   async createMatchday(tournamentId: string, label: string, order = 0) {
     const t = await this.prisma.tournament.findUnique({ where: { id: tournamentId } });
     if (!t) throw new BadRequestException('Torneo inexistente.');
+    const dup = await this.prisma.matchday.findUnique({ where: { tournamentId_label: { tournamentId, label } } });
+    if (dup) throw new BadRequestException('Ya existe una fecha con esa etiqueta en este torneo.');
     return this.prisma.matchday.create({ data: { tournamentId, label, order } });
   }
 
@@ -125,17 +136,21 @@ export class FixturesService {
     return { id: matchday.id, label: matchday.label, order: matchday.order, published: matchday.published, matches };
   }
 
-  private detail() {
+  private matchInclude() {
     return {
-      include: {
-        matches: {
-          include: {
-            homeClub: true,
-            awayClub: true,
-            categories: { include: { category: true, broadcasts: true } },
-          },
+      matches: {
+        include: {
+          homeClub: true,
+          awayClub: true,
+          categories: { include: { category: true, broadcasts: true } },
         },
       },
+    } as const;
+  }
+
+  private detail() {
+    return {
+      include: this.matchInclude(),
       orderBy: { order: 'asc' as const },
     };
   }

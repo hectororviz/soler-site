@@ -6,6 +6,7 @@ import { Container } from '../../components/layout/Container';
 import { MatchCard } from '../../components/sports/MatchCard';
 import { BroadcastCard } from '../../components/sports/BroadcastCard';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
+import { usePageTitle } from '../../lib/usePageTitle';
 
 const STREAMING_URL = import.meta.env.VITE_STREAMING_URL ?? 'https://streaming.csdsoler.com.ar';
 
@@ -31,7 +32,7 @@ const competitions = [
 ];
 
 function usePageMeta() {
-  document.title = 'CSD Soler — Club Social y Deportivo Soler';
+  usePageTitle('CSD Soler — Club Social y Deportivo Soler');
 }
 
 export function HomePage() {

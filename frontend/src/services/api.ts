@@ -33,9 +33,11 @@ export function setAdminToken(token: string | null) {
 interface RequestOptions {
   signal?: AbortSignal;
   admin?: boolean;
+  body?: unknown;
+  form?: boolean;
 }
 
-async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
+async function request<T>(path: string, method: string, opts: RequestOptions = {}): Promise<T> {
   if (!BASE) {
     throw new ApiError('API no configurada (VITE_API_URL).', 'unavailable');
   }
@@ -46,21 +48,31 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
     externalSignal.addEventListener('abort', () => controller.abort(), { once: true });
   }
   try {
-    const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+    const headers: Record<string, string> = {};
+    if (!opts.form) headers['Content-Type'] = 'application/json';
     if (opts.admin) {
       const token = getAdminToken();
       if (!token) throw new ApiError('Sesión administrativa requerida.', 'http', 401);
       headers.Authorization = `Bearer ${token}`;
     }
-    const res = await fetch(`${BASE}${path}`, { headers, signal: controller.signal });
+    const res = await fetch(`${BASE}${path}`, {
+      method,
+      headers,
+      signal: controller.signal,
+      body: opts.form ? (opts.body as FormData) : opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    });
+    if (res.status === 204) return undefined as T;
+    const text = await res.text();
+    const data = text ? (JSON.parse(text) as T) : (undefined as T);
     if (!res.ok) {
-      if (res.status === 401) throw new ApiError('No autorizado.', 'http', 401);
-      if (res.status === 403) throw new ApiError('Operación restringida.', 'http', 403);
-      if (res.status === 404) throw new ApiError('Recurso no encontrado.', 'http', 404);
+      const msg = (data as { message?: string })?.message ?? `Error ${res.status}.`;
+      if (res.status === 401) throw new ApiError(msg || 'No autorizado.', 'http', 401);
+      if (res.status === 403) throw new ApiError(msg || 'Operación restringida.', 'http', 403);
+      if (res.status === 404) throw new ApiError(msg || 'Recurso no encontrado.', 'http', 404);
       if (res.status >= 500) throw new ApiError('Servicio temporalmente no disponible.', 'unavailable', res.status);
-      throw new ApiError(`Error ${res.status}.`, 'http', res.status);
+      throw new ApiError(msg, 'http', res.status);
     }
-    return (await res.json()) as T;
+    return data;
   } catch (err) {
     if (err instanceof ApiError) throw err;
     if (err instanceof DOMException && err.name === 'AbortError') {
@@ -73,7 +85,15 @@ async function request<T>(path: string, opts: RequestOptions = {}): Promise<T> {
 }
 
 export const api = {
-  get: <T>(path: string, opts?: RequestOptions) => request<T>(path, opts),
+  get: <T>(path: string, opts?: RequestOptions) => request<T>(path, 'GET', opts),
+  post: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>(path, 'POST', { ...opts, body }),
+  patch: <T>(path: string, body?: unknown, opts?: RequestOptions) => request<T>(path, 'PATCH', { ...opts, body }),
+  del: <T>(path: string, opts?: RequestOptions) => request<T>(path, 'DELETE', opts),
+  upload: <T>(path: string, file: File, field = 'file', opts?: RequestOptions) => {
+    const form = new FormData();
+    form.append(field, file);
+    return request<T>(path, 'POST', { ...opts, body: form, form: true });
+  },
 };
 
 export const apiConfig = {

@@ -10,6 +10,7 @@ import { cn } from '../../lib/utils';
 import type { FixtureClash, FixtureRound } from '../../types';
 import { ApiError } from '../../types';
 import { useCategories, useFixtureFilters, useFixtureRounds, useRoundSelection, useTournaments } from './useFixture';
+import { usePageTitle } from '../../lib/usePageTitle';
 
 function ShareButton() {
   const [copied, setCopied] = useState(false);
@@ -85,7 +86,7 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
 }
 
 export function FixturePage() {
-  document.title = 'Fixture — CSD Soler';
+  usePageTitle('Fixture — CSD Soler');
   const [filters, setFilters] = useFixtureFilters();
   const tournamentsQ = useTournaments();
   const tournaments = tournamentsQ.data ?? [];

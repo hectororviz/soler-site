@@ -36,13 +36,14 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 - [ ] Verificar `https://csdsoler.com.ar` y `/api/v1/health`. Cambiar `ADMIN_PASSWORD`. `SEED_ON_BOOT=false`.
 
 ### 2. Panel admin UI (`/admin`)
-- [ ] Login (usa `POST /api/v1/admin/auth/login`, guarda token, interceptor `Authorization`).
-- [ ] Layout admin (sidebar + topbar, separado del sitio público) + dashboard con conteos reales.
-- [ ] CRUD temporadas / torneos / categorías / clubes (con carga de escudo → `POST /admin/clubs/crest`).
-- [ ] Inscripción de clubes por torneo (con categorías habilitadas).
-- [ ] **Wizard de fixture**: torneo → fecha → enfrentamientos → encuentros auto → ajustar horario/sede → publicar.
-- [ ] ABM transmisiones (vincular a encuentro, estados), contenidos, sponsors, galería.
-- [ ] Toasts, confirmaciones, validación visible de errores del backend.
+- [x] Login (usa `POST /api/v1/admin/auth/login`, guarda token, interceptor `Authorization`).
+- [x] Layout admin (sidebar + topbar, separado del sitio público) + dashboard con conteos reales.
+- [x] CRUD temporadas / torneos / categorías / clubes (con carga de escudo → `POST /admin/clubs/crest`).
+- [x] Inscripción de clubes por torneo (con categorías habilitadas).
+- [x] **Wizard de fixture**: torneo → fecha → enfrentamientos → encuentros auto → ajustar horario/sede → publicar.
+- [x] ABM transmisiones (vincular a encuentro, estados), contenidos, sponsors. Galería pendiente (usa contenido+archivos).
+- [x] Confirmaciones, validación visible de errores del backend. (Toasts: pendiente menor.)
+- [ ] Probar flujo completo con datos reales y ajustar UX.
 
 ### 3. Páginas públicas restantes (Fase B)
 - [ ] `/competiciones` + detalle (usa `/tournaments`, `/categories`).

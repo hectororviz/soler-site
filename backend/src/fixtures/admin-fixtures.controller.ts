@@ -1,4 +1,4 @@
-import { Controller, Post, Patch, Body, Param, UseGuards } from '@nestjs/common';
+import { Controller, Post, Patch, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
 import { IsString, IsOptional, IsBoolean } from 'class-validator';
 import { FixturesService } from './fixtures.service';
 import { AdminGuard } from '../auth/admin.guard';
@@ -25,6 +25,16 @@ class PublishDto {
 @Controller('admin')
 export class AdminFixturesController {
   constructor(private readonly fixtures: FixturesService) {}
+
+  @Get('matchdays')
+  adminMatchdays(@Query('tournament') tournament: string) {
+    return this.fixtures.adminMatchdays(tournament);
+  }
+
+  @Get('matchdays/:id')
+  adminMatchday(@Param('id') id: string) {
+    return this.fixtures.adminMatchday(id);
+  }
 
   @Post('matchdays')
   createMatchday(@Body() dto: MatchdayDto) {
