@@ -1,6 +1,8 @@
 FROM node:22-alpine AS build
 RUN apk add --no-cache openssl
 WORKDIR /app
+# Dummy solo para que prisma generate cargue su config; el runtime usa la real.
+ARG DATABASE_URL=postgresql://postgres:postgres@localhost:5432/build?schema=public
 COPY package*.json ./
 RUN npm ci
 COPY . .

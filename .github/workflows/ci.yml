@@ -39,6 +39,9 @@ jobs:
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
       - run: npx prisma generate
+        env:
+          # generate no necesita DB real; prisma.config.ts exige la variable al cargarse
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ci?schema=public
       - run: npm run build
 
   images:

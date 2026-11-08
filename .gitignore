@@ -4,3 +4,4 @@ dist/
 !.env.example
 backend/uploads/
 *.log
+dist-seed/
