@@ -1,0 +1,1470 @@
+# CSD SOLER — ESPECIFICACIÓN COMPLETA DE FRONTEND PARA OPENCODE
+
+## 0. Contexto y objetivo
+
+Desarrollar el frontend público y administrativo del sitio oficial del **Club Social y Deportivo Soler**, disponible en `csdsoler.com.ar`.
+
+Este documento complementa la especificación funcional y técnica original del proyecto. Todas las reglas de negocio, integraciones, fuentes de datos, arquitectura, seguridad y restricciones definidas en el documento original siguen vigentes.
+
+**Prioridad de las instrucciones:**
+
+1. La especificación original determina funcionalidades, modelos de datos, integraciones y fuentes de verdad.
+2. Este documento define la experiencia visual, la interacción y el comportamiento del frontend.
+3. Ante una contradicción funcional, prevalece la especificación original.
+4. No introducir nuevas funcionalidades de negocio únicamente por razones estéticas.
+5. No inventar resultados, tablas, clubes, categorías, fechas, transmisiones ni contenido institucional real.
+
+El resultado debe ser una plataforma deportiva moderna, administrable, rápida y responsive, con una identidad visual propia de un club de fútbol de barrio.
+
+No desarrollar una landing page genérica, un sitio corporativo tradicional ni una imitación de un club profesional.
+
+La web debe permitir que una persona encuentre rápidamente la información que busca: el próximo partido, el fixture de una categoría, el resultado de una fecha, una tabla de posiciones o una transmisión.
+
+---
+
+# 1. Identidad visual
+
+## 1.1. Concepto
+
+Adoptar una estética **deportiva moderna, equilibrada y comunitaria**.
+
+La apariencia debe combinar:
+
+- Identidad institucional fuerte.
+- Fotografías reales del club.
+- Información deportiva ordenada.
+- Componentes visuales modernos.
+- Navegación sencilla.
+- Excelente experiencia móvil.
+- Sensación de pertenencia al club.
+
+Evitar exceso de animaciones, fondos recargados, degradados llamativos y efectos visuales sin utilidad.
+
+El sitio debe resultar atractivo y profesional sin perder su carácter barrial.
+
+## 1.2. Tema
+
+Implementar un tema predominantemente LIGHT.
+
+Utilizar:
+
+- Fondo general blanco o gris muy claro.
+- Superficies blancas.
+- Tipografía oscura.
+- Bordes sutiles.
+- Espaciados generosos.
+- Rojo institucional como acento principal.
+- Secciones negras o antracita para destacar contenido deportivo importante.
+
+No implementar un diseño global oscuro.
+
+## 1.3. Paleta
+
+Crear tokens centralizados, ajustables según el escudo oficial.
+
+Valores iniciales:
+
+- Primary: `#B8202D`
+- Primary hover: `#981B26`
+- Dark: `#171719`
+- Secondary green: `#287447`
+- Accent gold: `#D3AC45`
+- White: `#FFFFFF`
+- Background: `#F5F6F7`
+- Border: `#E5E7EB`
+- Text primary: `#171719`
+- Text secondary: `#6B7280`
+
+El rojo identifica acciones principales y elementos institucionales.
+
+El verde se utiliza para estados positivos y determinados indicadores deportivos.
+
+El dorado se reserva para detalles de identidad y acentos limitados.
+
+No utilizar rojo como único medio para comunicar errores ni verde como único medio para comunicar estados.
+
+No dispersar colores fijos en componentes.
+
+## 1.4. Escudo
+
+El escudo oficial del CSD Soler es el elemento central de identidad.
+
+Reglas:
+
+- Utilizar únicamente el archivo oficial proporcionado.
+- No rediseñar el escudo.
+- No generar versiones alternativas inventadas.
+- Mantener proporciones.
+- No deformar ni recortar.
+- Conservar los colores originales.
+- Permitir su reemplazo desde la configuración administrativa correspondiente.
+- Preparar versiones optimizadas para navegación y pantallas de alta densidad.
+
+Si todavía no se dispone del archivo oficial, utilizar un placeholder neutral claramente identificable y reemplazable.
+
+## 1.5. Tipografía
+
+Utilizar dos estilos tipográficos:
+
+**Títulos deportivos:** preferentemente Barlow Condensed, con pesos 600–800.
+
+**Interfaz y contenidos:** preferentemente Inter, con pesos 400–700.
+
+Cargar y optimizar las fuentes respetando las licencias y disponibilidad.
+
+Definir una escala tipográfica responsive:
+
+- Hero: 40–64 px en escritorio, 30–40 px en móvil.
+- Título principal de página: 30–42 px.
+- Encabezados de sección: 24–32 px.
+- Subtítulos: 18–22 px.
+- Texto normal: 16 px.
+- Metadatos: 13–14 px.
+
+Evitar texto excesivamente pequeño.
+
+## 1.6. Fotografía
+
+La fotografía será protagonista de la portada.
+
+Priorizar imágenes reales del club:
+
+- Equipos.
+- Jugadores y jugadoras.
+- Encuentros deportivos.
+- Canchas.
+- Actividades institucionales.
+- Comunidad.
+
+No utilizar imágenes de futbolistas profesionales, camisetas de otros clubes o escudos ficticios como si pertenecieran a Soler.
+
+Si faltan fotografías reales, utilizar placeholders visualmente neutros y administrables.
+
+Implementar optimización, imágenes responsive y carga diferida cuando corresponda.
+
+Respetar las autorizaciones necesarias para publicar imágenes de menores.
+
+---
+
+# 2. Sistema de diseño
+
+Implementar un sistema reutilizable basado en React, TypeScript, Tailwind CSS y shadcn/ui, conforme al stack original.
+
+Todos los componentes deben usar tokens semánticos.
+
+## 2.1. Layout
+
+Diseño mobile-first.
+
+Definir un contenedor central de hasta 1280 px para el contenido general.
+
+Usar:
+
+- Máximo de contenido: 1280 px.
+- Márgenes móviles: 16–20 px.
+- Márgenes de escritorio: 32–48 px.
+- Separación entre secciones: 48–80 px según dispositivo.
+- Sistema de espaciado múltiplo de 4 px.
+- Grid responsive.
+- Esquinas redondeadas moderadas.
+- Sombras muy suaves.
+- Bordes discretos.
+
+No utilizar tarjetas con redondeos exagerados o sombras grandes.
+
+## 2.2. Componentes básicos
+
+Crear componentes reutilizables para:
+
+- Botones primarios, secundarios y de texto.
+- Campos de entrada.
+- Selectores.
+- Tabs.
+- Menús desplegables.
+- Breadcrumbs.
+- Tarjetas.
+- Badges de estado.
+- Alertas.
+- Modales.
+- Skeleton loaders.
+- Estados vacíos.
+- Mensajes de error.
+- Paginación.
+- Galerías.
+- Diálogos de confirmación.
+- Toasts de operaciones administrativas.
+
+Todos deben tener estados normal, hover, focus, active, disabled y loading cuando corresponda.
+
+## 2.3. Componentes deportivos
+
+Crear componentes específicos:
+
+**ClubBadge**
+- Escudo.
+- Nombre corto opcional.
+- Variante compacta y completa.
+- Placeholder cuando no exista imagen.
+
+**MatchCard**
+- Escudos de local y visitante.
+- Nombres de los clubes.
+- Torneo y categoría.
+- Jornada.
+- Fecha y horario si están disponibles.
+- Sede cuando corresponda.
+- Estado del partido.
+- Marcador únicamente cuando exista resultado confirmado.
+- Acceso al detalle.
+- Indicador de transmisión cuando corresponda.
+
+**FixtureRound**
+- Encabezado de fecha.
+- Estado de publicación.
+- Lista de enfrentamientos.
+- Identificación visual de Soler.
+- Expansión de encuentros por categoría.
+
+**ScoreDisplay**
+- Marcador con cifras destacadas.
+- Estado finalizado.
+- Soporte para datos no disponibles.
+- Nunca sustituir un marcador desconocido por 0-0.
+
+**StandingsTable**
+- Posición.
+- Club y escudo.
+- Estadísticas disponibles.
+- Puntos.
+- Resaltado de Soler.
+- Adaptación móvil.
+
+**TournamentSelector**
+- Selector de competición.
+- Selector de categoría.
+- Selector de temporada cuando corresponda.
+
+**MatchStatusBadge**
+- EN VIVO.
+- PRÓXIMO.
+- FINALIZADO.
+- SUSPENDIDO.
+- PROGRAMADO.
+
+**LiveIndicator**
+- Indicador visual accesible.
+- Animación muy sutil y opcional.
+- Únicamente activo cuando el backend confirme la transmisión.
+
+**BroadcastCard**
+- Encuentro vinculado.
+- Categoría.
+- Fecha y hora.
+- Estado verificado.
+- Acceso al reproductor.
+
+**SectionHeading**
+- Título.
+- Descripción opcional.
+- Enlace secundario para ver información completa.
+
+Mantener consistencia entre todas las pantallas.
+
+---
+
+# 3. Navegación general
+
+## 3.1. Header de escritorio
+
+Construir un encabezado horizontal con:
+
+Izquierda:
+- Escudo oficial.
+- Nombre CSD Soler o identidad institucional.
+
+Centro:
+- Inicio.
+- Competiciones.
+- Fixture.
+- Resultados.
+- Posiciones.
+- El Club.
+- Galería.
+- Contacto.
+
+Derecha:
+- Acceso destacado a Soler TV.
+
+El header debe ser sticky, con altura moderada y fondo claro.
+
+Cuando la página se desplace, podrá incorporar una sombra sutil para separarlo visualmente del contenido.
+
+Mantener el acceso a Soler TV visible sin utilizar falsos estados EN VIVO.
+
+## 3.2. Header móvil
+
+Implementar:
+
+- Escudo a la izquierda.
+- Acceso compacto a Soler TV.
+- Botón hamburguesa a la derecha.
+
+El menú debe desplegarse como drawer lateral o panel superior accesible.
+
+Debe incluir todos los enlaces principales.
+
+Requisitos:
+
+- Cierre mediante botón.
+- Cierre con Escape.
+- Cierre al navegar.
+- Control del foco.
+- Bloqueo adecuado del desplazamiento de fondo.
+- Indicación de la sección activa.
+
+No implementar barra inferior de navegación.
+
+## 3.3. Footer
+
+Incluir:
+
+- Identidad del club.
+- Enlaces de navegación.
+- Redes sociales configuradas.
+- Datos de contacto disponibles.
+- Sponsors.
+- Enlace a la plataforma de streaming.
+- Año actual obtenido dinámicamente.
+
+No mostrar direcciones, teléfonos ni redes inventadas.
+
+---
+
+# 4. Página de inicio
+
+La portada debe ser la sección visualmente más atractiva del sitio, sin sacrificar el acceso rápido a información deportiva.
+
+## 4.1. Orden principal
+
+1. Hero fotográfico.
+2. Partido o transmisión en vivo, cuando exista.
+3. Próximos encuentros destacados.
+4. Últimos resultados.
+5. Acceso a competiciones.
+6. Soler TV.
+7. Bloque institucional.
+8. Galería destacada.
+9. Sponsors.
+10. Footer.
+
+La presencia y visibilidad de cada bloque debe depender de la disponibilidad real de sus datos.
+
+## 4.2. Hero fotográfico
+
+Utilizar una fotografía real de gran tamaño.
+
+En escritorio:
+
+- Ancho completo.
+- Altura aproximada entre 480 y 620 px, adaptable al viewport.
+- Imagen con `object-fit: cover`.
+- Punto focal configurable.
+- Overlay oscuro gradual para legibilidad.
+- Texto alineado a la izquierda.
+- Escala tipográfica deportiva.
+
+Contenido sugerido:
+
+Título: "Más que un club, una pasión de barrio."
+
+Subtítulo: "Viví toda la actividad deportiva del Club Social y Deportivo Soler."
+
+Acciones:
+- Ver próximos partidos.
+- Conocer el club.
+
+Estas frases son propuestas de contenido y deben ser editables, no afirmaciones históricas.
+
+En móvil:
+
+- Altura adaptada.
+- Encuadre adecuado.
+- Título de máximo tres o cuatro líneas según ancho.
+- Botones claramente visibles.
+- Evitar que la imagen y el texto generen desplazamiento horizontal.
+
+El hero no debe impedir que la persona encuentre rápidamente la información deportiva.
+
+## 4.3. Partido en vivo
+
+Cuando exista un encuentro con transmisión realmente activa, mostrar un bloque destacado cercano al inicio.
+
+Diseño:
+
+- Superficie oscura.
+- Indicador EN VIVO.
+- Escudos.
+- Nombres de clubes.
+- Categoría.
+- Información disponible del encuentro.
+- Botón "Ver transmisión".
+
+Si no existe transmisión activa, no mostrar una tarjeta que aparente estar en vivo.
+
+El módulo puede omitirse sin dejar espacios vacíos.
+
+## 4.4. Próximos encuentros
+
+Mostrar tarjetas compactas y claras.
+
+En escritorio: grid de hasta tres columnas.
+
+En móvil: una columna o carrusel horizontal accesible si su uso está justificado.
+
+Cada tarjeta debe permitir identificar rápidamente quién juega, categoría, día, horario y sede, cuando esos datos existan.
+
+No asumir que todos los encuentros poseen la misma sede u horario.
+
+Agregar enlace a fixture completo.
+
+## 4.5. Últimos resultados
+
+Utilizar tarjetas con mayor protagonismo del marcador.
+
+- Escudos enfrentados.
+- Marcador confirmado.
+- Categoría.
+- Torneo.
+- Fecha.
+- Estado finalizado.
+
+Agregar acceso a resultados completos.
+
+No generar marcadores ficticios.
+
+## 4.6. Competiciones
+
+Crear tres tarjetas principales configurables:
+
+- Fútbol femenino.
+- Juveniles sábados.
+- Juveniles domingos.
+
+Usar la estructura vigente como contenido inicial, pero no hardcodear los torneos ni asumir permanencia.
+
+Cada tarjeta tendrá:
+
+- Nombre.
+- Imagen o recurso visual institucional.
+- Breve descripción editable, cuando exista.
+- Enlace al torneo.
+
+Diseño visual deportivo y limpio.
+
+## 4.7. Soler TV
+
+Crear una sección diferenciada con fondo oscuro.
+
+Incluir:
+
+- Identidad Soler TV.
+- Estado de transmisiones disponible.
+- Próxima transmisión programada si existe.
+- Enlace a la sección de transmisiones.
+
+No mostrar un reproductor ficticio ni un botón EN VIVO cuando no exista emisión confirmada.
+
+## 4.8. Bloque institucional
+
+Combinar fotografía y texto.
+
+En escritorio: dos columnas.
+
+En móvil: disposición vertical.
+
+Utilizar contenido real administrado desde el backoffice.
+
+Agregar enlace a El Club.
+
+## 4.9. Galería y sponsors
+
+Mostrar fotografías recientes disponibles en una cuadrícula responsive.
+
+Sponsors en una franja visual limpia con logotipos correctamente proporcionados.
+
+No inventar marcas ni imágenes.
+
+---
+
+# 5. Competiciones
+
+Crear `/competiciones`.
+
+Mostrar las competiciones activas según los datos administrados.
+
+Cada tarjeta debe permitir acceder al detalle de una competición.
+
+Diseño:
+
+- Título de página.
+- Introducción breve.
+- Grid de tarjetas.
+- Información básica disponible.
+- Enlace al torneo.
+
+## 5.1. Detalle de competición
+
+Ruta sugerida: `/competiciones/:torneoSlug`.
+
+El detalle tendrá:
+
+- Nombre del torneo.
+- Temporada.
+- Selector de categoría.
+- Accesos a fixture, resultados y posiciones.
+- Resumen de encuentros próximos o recientes cuando existan.
+
+No crear datos deportivos derivados que no estén respaldados por la API.
+
+---
+
+# 6. Fixture
+
+El fixture es una funcionalidad principal y debe tener una experiencia de consulta especialmente cuidada.
+
+Ruta principal: `/fixture`.
+
+## 6.1. Filtros
+
+Mostrar:
+
+- Temporada.
+- Torneo.
+- Categoría opcional.
+- Fecha o jornada.
+
+Los filtros deben mantenerse sincronizados con la URL para compartir enlaces.
+
+No guardar únicamente el estado de selección en memoria.
+
+## 6.2. Navegación por jornadas
+
+Implementar navegación clara:
+
+- Fecha anterior.
+- Identificador de jornada actual.
+- Fecha siguiente.
+- Selector para saltar a otra jornada.
+
+En móvil, evitar una fila excesivamente ancha de botones.
+
+## 6.3. Enfrentamientos entre clubes
+
+Cada jornada muestra todos los enfrentamientos del torneo, no solo los de Soler.
+
+Cada enfrentamiento debe incluir:
+
+- Club local.
+- Club visitante.
+- Escudos.
+- Jornada.
+- Información general disponible.
+- Acceso a sus encuentros por categoría.
+
+El diseño debe reflejar que un enfrentamiento puede contener varios encuentros por categoría.
+
+No representar cada categoría como un enfrentamiento completamente independiente cuando eso contradiga el modelo original.
+
+## 6.4. Detalle por categoría
+
+Al expandir o abrir un enfrentamiento, mostrar los encuentros válidos por categoría.
+
+Cada encuentro podrá tener:
+
+- Categoría.
+- Horario propio.
+- Sede propia.
+- Estado.
+- Resultado externo confirmado, si está disponible.
+- Transmisión vinculada, si existe.
+
+No asumir que todas las categorías comparten horario.
+
+No mostrar categorías inexistentes para determinados clubes.
+
+## 6.5. Destaque de Soler
+
+Resaltar suavemente los enfrentamientos donde participa CSD Soler.
+
+Propuesta:
+
+- Borde izquierdo rojo.
+- Fondo ligeramente diferenciado.
+- Mayor peso visual del nombre.
+
+No ocultar ni relegar los restantes enfrentamientos.
+
+## 6.6. Detalle compartible
+
+Crear rutas estables para jornadas y encuentros utilizando identificadores o slugs seguros.
+
+Permitir compartir el enlace mediante las funciones del navegador.
+
+Si la función nativa de compartir no está disponible, ofrecer copia del enlace con confirmación.
+
+---
+
+# 7. Resultados
+
+Ruta: `/resultados`.
+
+Implementar:
+
+- Selector de temporada.
+- Selector de torneo.
+- Selector de categoría.
+- Consulta de historial.
+- Agrupación por jornada cuando corresponda.
+
+Utilizar tarjetas deportivas compactas.
+
+El marcador tendrá jerarquía tipográfica.
+
+Mostrar información proveniente exclusivamente de Ligas Deportivas mediante la API del backend.
+
+Si existe un enfrentamiento en fixture sin resultado oficial, no mostrar un resultado inventado.
+
+Si la fuente externa no está disponible, mostrar un estado de indisponibilidad separado de un resultado pendiente.
+
+No agregar goleadores, estadísticas individuales ni métricas no disponibles.
+
+---
+
+# 8. Tablas de posiciones
+
+Ruta: `/posiciones`.
+
+Crear una página centrada en la consulta rápida.
+
+## 8.1. Selectores
+
+- Torneo.
+- Categoría.
+- Temporada, si corresponde.
+
+## 8.2. Tabla
+
+Columnas basadas exclusivamente en los datos disponibles y normalizados por la API.
+
+Priorizar:
+
+- Posición.
+- Club.
+- Partidos jugados.
+- Partidos ganados.
+- Partidos empatados.
+- Partidos perdidos.
+- Diferencia de gol cuando exista.
+- Puntos.
+
+No calcular ni inventar columnas que la integración no respalde.
+
+## 8.3. Destaque de Soler
+
+La fila de Soler deberá diferenciarse mediante:
+
+- Fondo rojo muy suave.
+- Borde lateral.
+- Nombre en semibold.
+
+No alterar el orden oficial de la tabla.
+
+## 8.4. Responsive
+
+En pantallas pequeñas:
+
+- Mantener posición, club y puntos claramente visibles.
+- Permitir desplazamiento horizontal de la tabla para las restantes columnas.
+- Señalizar el desplazamiento cuando sea necesario.
+- Evitar reducir toda la tipografía hasta volverla ilegible.
+
+Considerar mantener fija la columna del club si puede hacerse sin perjudicar el ancho útil.
+
+Soportar tablas con muchos equipos.
+
+---
+
+# 9. Soler TV
+
+Ruta: `/soler-tv`.
+
+Esta sección debe integrarse con la plataforma existente:
+
+`streaming.csdsoler.com.ar`
+
+No construir una segunda plataforma de streaming.
+
+## 9.1. Jerarquía
+
+1. Transmisiones activas.
+2. Próximas transmisiones.
+3. Mensaje informativo cuando no haya transmisiones disponibles.
+
+## 9.2. Tarjeta de transmisión
+
+Mostrar:
+
+- Club local y visitante.
+- Escudos.
+- Categoría.
+- Fecha y horario.
+- Estado validado.
+- Acceso a reproducción cuando corresponda.
+
+## 9.3. Estados
+
+PROGRAMADA:
+- Mostrar fecha y horario disponibles.
+- No activar automáticamente el reproductor.
+
+EN VIVO:
+- Mostrar indicador rojo.
+- Habilitar acceso al reproductor real.
+- Mostrar señal verificada.
+
+FINALIZADA:
+- Retirar de la sección activa.
+- No presentar como transmisión disponible.
+
+INTERRUMPIDA:
+- Mostrar estado informativo.
+- No declarar EN VIVO si la señal no está confirmada.
+
+## 9.4. Integración visual
+
+Si el proveedor permite embebido seguro, utilizar el reproductor real.
+
+Si no lo permite, mostrar un botón para abrir la plataforma existente.
+
+No utilizar URLs hardcodeadas fuera de la configuración correspondiente.
+
+No simular estados de transmisión.
+
+---
+
+# 10. El Club
+
+Ruta: `/el-club`.
+
+Crear una página institucional atractiva, sin una estética burocrática.
+
+Secciones:
+
+- Presentación del club.
+- Historia.
+- Fundación.
+- Autoridades.
+- Identidad institucional.
+- Fotografías.
+
+Utilizar composición editorial.
+
+Alternar bloques de texto e imágenes cuando exista material suficiente.
+
+No inventar año de fundación, nombres de autoridades ni hitos históricos.
+
+Todo contenido debe obtenerse de las fuentes administrables definidas en la especificación original.
+
+Si un bloque no dispone de contenido, no mostrar títulos vacíos.
+
+---
+
+# 11. Galería
+
+Ruta: `/galeria`.
+
+Crear una galería fotográfica moderna y sencilla.
+
+Requisitos:
+
+- Grid responsive.
+- Imágenes optimizadas.
+- Aspect ratios consistentes.
+- Apertura de imagen ampliada.
+- Navegación con teclado.
+- Cierre con Escape.
+- Texto alternativo.
+- Carga diferida.
+- Evitar cambios bruscos de layout.
+
+No incorporar comentarios públicos, perfiles, etiquetas de personas ni funcionalidades sociales.
+
+No publicar imágenes sin las autorizaciones correspondientes.
+
+---
+
+# 12. Contacto y sponsors
+
+Ruta: `/contacto`.
+
+Mostrar únicamente datos institucionales configurados.
+
+- Canales de contacto.
+- Redes sociales.
+- Ubicación, si fue informada.
+- Enlaces correspondientes.
+
+No mostrar mapas o direcciones ficticias.
+
+Crear una sección de sponsors administrable, con:
+
+- Logo.
+- Nombre.
+- Enlace externo opcional.
+- Orden de visualización.
+
+Los enlaces externos deben utilizar prácticas seguras.
+
+---
+
+# 13. Panel administrativo
+
+Ruta: `/admin`.
+
+Diseñar una interfaz separada del sitio público.
+
+Debe ser funcional, moderna, rápida y coherente con la identidad de Soler.
+
+No utilizar la estética fotográfica del sitio público para las pantallas de trabajo.
+
+## 13.1. Login
+
+Crear pantalla de autenticación con:
+
+- Escudo.
+- Nombre institucional.
+- Campo de usuario o credencial según la API.
+- Contraseña.
+- Botón de acceso.
+- Mensajes claros de error.
+
+No incluir registro público.
+
+No implementar recuperación de contraseña sin soporte real del backend.
+
+## 13.2. Layout administrativo
+
+En escritorio:
+
+- Sidebar izquierdo.
+- Barra superior.
+- Área central de contenido.
+- Identificación del usuario administrador.
+- Cierre de sesión.
+
+En móvil:
+
+- Sidebar desplegable.
+- Formularios verticales.
+- Tablas utilizables.
+- Botones táctiles.
+
+## 13.3. Menú administrativo
+
+Incluir acceso a:
+
+- Panel general.
+- Temporadas.
+- Torneos.
+- Categorías.
+- Clubes.
+- Participantes.
+- Fixture.
+- Sedes y horarios.
+- Transmisiones.
+- Contenido institucional.
+- Galería.
+- Sponsors.
+- Configuración.
+
+No agregar gestión avanzada de roles o usuarios fuera del alcance inicial.
+
+## 13.4. Dashboard
+
+Crear un panel informativo con métricas administrativas reales disponibles, por ejemplo:
+
+- Torneos configurados.
+- Clubes registrados.
+- Jornadas creadas.
+- Transmisiones programadas.
+
+Los indicadores deben obtenerse de la API.
+
+No mostrar métricas inventadas.
+
+Incluir accesos rápidos a tareas frecuentes.
+
+## 13.5. Formularios CRUD
+
+Mantener una estructura consistente:
+
+- Título.
+- Descripción breve.
+- Tabla de registros.
+- Búsqueda cuando corresponda.
+- Crear.
+- Editar.
+- Eliminar con confirmación.
+- Estados de operación.
+- Validación.
+
+Mostrar mensajes de confirmación y error.
+
+Evitar operaciones destructivas sin confirmación.
+
+## 13.6. Gestión del fixture
+
+Esta será una de las interfaces más importantes del panel.
+
+El flujo debe ser:
+
+1. Seleccionar temporada.
+2. Seleccionar torneo.
+3. Seleccionar o crear jornada.
+4. Agregar enfrentamientos entre clubes.
+5. Elegir local y visitante.
+6. Generar encuentros correspondientes a categorías habilitadas.
+7. Revisar encuentros generados.
+8. Ajustar sedes y horarios particulares.
+9. Guardar.
+10. Publicar jornada.
+
+La interfaz debe mostrar claramente la relación entre el enfrentamiento principal y sus encuentros por categoría.
+
+No exigir que el administrador cargue manualmente cada categoría desde cero.
+
+Prevenir duplicaciones y mostrar las validaciones del backend.
+
+Indicar claramente si la jornada está publicada o pendiente.
+
+## 13.7. Gestión de escudos e imágenes
+
+Crear componente de carga que permita:
+
+- Seleccionar archivo.
+- Vista previa.
+- Validación de formato y tamaño.
+- Reemplazo.
+- Eliminación cuando esté permitida.
+- Indicador de carga.
+- Mensajes de error.
+
+El almacenamiento real debe seguir la arquitectura definida en la especificación base.
+
+## 13.8. Resultados y posiciones
+
+No crear módulos para modificar manualmente resultados oficiales o tablas obtenidas desde Ligas Deportivas.
+
+La administración puede ofrecer configuración de correspondencias externas y consulta del estado de integración, si lo respalda el backend.
+
+No duplicar fuentes de verdad.
+
+---
+
+# 14. Responsive
+
+El diseño debe pensarse primero para móvil.
+
+Utilizar estos puntos de referencia:
+
+- Móvil pequeño: 320–374 px.
+- Móvil: 375–639 px.
+- Tablet: 640–1023 px.
+- Escritorio: 1024–1439 px.
+- Escritorio amplio: 1440 px o superior.
+
+Adaptar por contenido, no solamente por breakpoint.
+
+## 14.1. Móvil
+
+- Menú hamburguesa.
+- Hero adaptado.
+- Tarjetas apiladas.
+- Filtros verticales o compactos.
+- Tablas con desplazamiento horizontal.
+- Botones táctiles de al menos 44 × 44 px cuando corresponda.
+- Escudos de tamaño adecuado.
+- Marcadores legibles.
+- Ausencia de scroll horizontal global.
+- Acceso rápido a fixture y resultados.
+
+## 14.2. Tablet
+
+- Grid de dos columnas cuando tenga sentido.
+- Navegación adaptada.
+- Tablas más completas.
+- Uso equilibrado del espacio disponible.
+
+## 14.3. Escritorio
+
+- Header horizontal completo.
+- Hero amplio.
+- Grids de hasta tres o cuatro columnas según contenido.
+- Tablas completas.
+- Filtros en línea.
+- Sidebar administrativo persistente.
+
+No limitar el desarrollo responsive a ocultar y mostrar elementos.
+
+---
+
+# 15. Interacciones
+
+Implementar interacciones consistentes y accesibles.
+
+## 15.1. Filtros
+
+Al cambiar de torneo:
+
+- Actualizar categorías disponibles.
+- Validar la categoría seleccionada.
+- Restablecer la selección cuando ya no sea válida.
+- Actualizar los datos.
+- Sincronizar los parámetros de URL.
+
+Al cambiar de categoría:
+
+- Actualizar la vista correspondiente.
+- Mantener el torneo.
+- Mostrar indicador de carga.
+
+Al cambiar de jornada:
+
+- Actualizar los enfrentamientos.
+- Mantener filtros pertinentes.
+- Actualizar la URL.
+
+## 15.2. Navegación
+
+- Enlaces internos sin recarga completa.
+- Estado activo del menú.
+- Scroll apropiado al navegar.
+- Breadcrumbs en páginas profundas.
+- Enlaces compartibles.
+- Correcto funcionamiento de atrás y adelante del navegador.
+
+## 15.3. Acciones
+
+- Los botones deben ejecutar acciones reales.
+- Nunca mostrar controles decorativos que parezcan funcionales.
+- Confirmar operaciones administrativas.
+- Comunicar errores de forma comprensible.
+- Prevenir envíos duplicados de formularios.
+
+## 15.4. Animaciones
+
+Implementar transiciones discretas:
+
+- Hover de botones.
+- Elevación sutil de tarjetas.
+- Apertura de menú.
+- Cambios de estados.
+- Skeleton loaders.
+
+Duración orientativa: 150–250 ms.
+
+Respetar `prefers-reduced-motion`.
+
+No usar animaciones permanentes innecesarias.
+
+---
+
+# 16. Estados de interfaz
+
+Todos los componentes conectados a datos deben contemplar:
+
+**Loading:** skeletons o indicadores de progreso.
+
+**Empty:** ausencia real de registros, con mensaje contextual.
+
+**Error:** error al consultar un servicio, con opción de reintentar cuando corresponda.
+
+**Success:** carga finalizada correctamente.
+
+**Unavailable:** integración externa temporalmente no disponible.
+
+**Unauthorized:** acceso administrativo no autorizado.
+
+**Forbidden:** operación restringida.
+
+**Not found:** recurso inexistente.
+
+**Offline:** pérdida de conectividad detectada cuando pueda determinarse.
+
+Diferenciar claramente:
+
+- No hay partidos programados.
+- Los partidos todavía no tienen resultados.
+- No se pudieron obtener resultados.
+- No hay transmisión en vivo.
+- No se pudo confirmar el estado del streaming.
+
+No ocultar fallas técnicas detrás de estados vacíos engañosos.
+
+No mostrar datos de prueba como si fueran oficiales.
+
+---
+
+# 17. Accesibilidad
+
+Objetivo: WCAG 2.2 nivel AA en la medida aplicable.
+
+Implementar:
+
+- HTML semántico.
+- Navegación por teclado.
+- Focus visible.
+- Contraste adecuado.
+- Labels asociados a formularios.
+- Textos alternativos.
+- Encabezados jerárquicos.
+- Mensajes de error accesibles.
+- Estados comunicados mediante texto además de color.
+- Modal y drawer con gestión correcta de foco.
+- Tablas con encabezados accesibles.
+- Tamaños táctiles adecuados.
+- Compatibilidad con reducción de movimiento.
+
+No utilizar información transmitida únicamente por color o animación.
+
+---
+
+# 18. Arquitectura frontend
+
+Respetar el stack original:
+
+- React.
+- Vite.
+- TypeScript.
+- Tailwind CSS.
+- shadcn/ui.
+
+Organizar el código por responsabilidades.
+
+Estructura sugerida:
+
+`src/app`
+- Configuración.
+- Providers.
+- Router.
+
+`src/components/ui`
+- Componentes visuales básicos.
+
+`src/components/sports`
+- Componentes deportivos reutilizables.
+
+`src/components/layout`
+- Header.
+- Footer.
+- Contenedores.
+- Navegación.
+
+`src/features/fixtures`
+- Páginas, componentes, hooks y servicios de fixture.
+
+`src/features/results`
+- Resultados.
+
+`src/features/standings`
+- Posiciones.
+
+`src/features/broadcasts`
+- Soler TV.
+
+`src/features/content`
+- Contenido institucional.
+
+`src/features/admin`
+- Administración.
+
+`src/services`
+- Cliente de API.
+- Normalización de respuestas del frontend cuando corresponda.
+
+`src/styles`
+- Tokens.
+- Variables.
+- Estilos globales.
+
+`src/types`
+- Tipos compartidos del frontend.
+
+Esta estructura es orientativa y puede adaptarse a la organización existente.
+
+## 18.1. Consumo de API
+
+El frontend se comunicará exclusivamente con la API propia del proyecto.
+
+No conectarse directamente desde React al Supabase externo de Ligas Deportivas.
+
+No exponer credenciales.
+
+Utilizar un cliente HTTP centralizado, con:
+
+- Tipado.
+- Tratamiento de errores.
+- Timeouts razonables.
+- Manejo de autenticación administrativa.
+- Estados de carga.
+- Cancelación de consultas obsoletas.
+- Estrategias de caché cuando correspondan.
+
+Puede utilizarse TanStack Query para gestionar consultas, invalidación y caché, si resulta compatible con las dependencias y la arquitectura existente.
+
+No introducir una segunda fuente de datos independiente.
+
+## 18.2. Routing
+
+Utilizar navegación cliente compatible con URLs profundas.
+
+Todas las páginas deben funcionar al abrir directamente su URL o refrescar el navegador.
+
+El proxy y el servidor deben estar configurados para soportar las rutas del frontend.
+
+## 18.3. SEO
+
+Las páginas públicas deberán tener:
+
+- Title individual.
+- Meta description.
+- Open Graph.
+- URL canónica.
+- Sitemap.
+- Robots.
+- Jerarquía de encabezados.
+- Información social compartible.
+
+Evaluar prerenderizado para páginas institucionales y deportivas indexables.
+
+No incorporar SSR complejo sin una justificación real.
+
+---
+
+# 19. Rendimiento
+
+Establecer objetivos técnicos:
+
+- Evitar desplazamientos inesperados de contenido.
+- Optimizar la imagen hero.
+- Precargar únicamente recursos críticos.
+- Lazy load de rutas secundarias.
+- Lazy load de imágenes no críticas.
+- Code splitting.
+- Evitar librerías visuales excesivamente pesadas.
+- Evitar múltiples consultas redundantes a la API.
+- Mantener interacciones fluidas en dispositivos móviles de gama media.
+
+Usar Core Web Vitals como referencia de validación:
+
+- LCP objetivo: menor o igual a 2,5 s.
+- CLS objetivo: menor o igual a 0,1.
+- INP objetivo: menor o igual a 200 ms.
+
+Estos son objetivos a verificar, no resultados que puedan asumirse sin pruebas.
+
+---
+
+# 20. Datos de demostración
+
+Durante el desarrollo puede ser necesario visualizar componentes antes de completar las integraciones.
+
+Permitir datos mock exclusivamente en entorno de desarrollo, separados de los servicios reales.
+
+Reglas:
+
+- No presentar mocks como datos oficiales.
+- No activar mocks automáticamente en producción.
+- No inventar información deportiva en la versión publicada.
+- No usar escudos inventados para representar clubes reales.
+- No permitir que mocks oculten fallas de integraciones reales.
+
+Si no existen registros reales, mostrar correctamente los estados vacíos.
+
+---
+
+# 21. Criterios visuales de aceptación
+
+El frontend estará correctamente implementado cuando se cumplan las siguientes condiciones:
+
+### Identidad
+
+- [ ] El escudo oficial se muestra correctamente.
+- [ ] La paleta respeta la identidad institucional.
+- [ ] El sitio mantiene un tema claro.
+- [ ] Los títulos tienen estilo deportivo.
+- [ ] No parece una plantilla corporativa genérica.
+- [ ] La fotografía real es protagonista de la portada.
+
+### Navegación
+
+- [ ] El header funciona en escritorio.
+- [ ] El menú superior desplegable funciona en móvil.
+- [ ] Soler TV tiene acceso claramente identificado.
+- [ ] Las rutas profundas funcionan al refrescar.
+- [ ] Se identifica la sección activa.
+- [ ] La navegación es accesible mediante teclado.
+
+### Portada
+
+- [ ] El hero es responsive.
+- [ ] Los textos mantienen legibilidad sobre las imágenes.
+- [ ] Los próximos partidos son fáciles de encontrar.
+- [ ] Los resultados tienen jerarquía visual.
+- [ ] Las competiciones son accesibles.
+- [ ] El bloque EN VIVO aparece solo cuando corresponde.
+- [ ] Sponsors e información institucional se muestran cuando existen datos.
+
+### Fixture
+
+- [ ] Se visualizan todos los enfrentamientos de una jornada.
+- [ ] Soler se identifica visualmente.
+- [ ] Se pueden consultar encuentros por categoría.
+- [ ] Los filtros funcionan correctamente.
+- [ ] La URL refleja el contexto de consulta.
+- [ ] Los horarios y sedes particulares se respetan.
+- [ ] No aparecen encuentros para categorías no habilitadas.
+
+### Resultados y posiciones
+
+- [ ] Los marcadores se muestran correctamente.
+- [ ] No se muestran resultados inventados.
+- [ ] Las tablas respetan el orden oficial.
+- [ ] Soler está destacado sin alterar los datos.
+- [ ] Las tablas son utilizables en móvil.
+- [ ] Los errores de integración son visibles y comprensibles.
+
+### Soler TV
+
+- [ ] Las transmisiones se muestran según su estado real.
+- [ ] No aparecen falsos indicadores EN VIVO.
+- [ ] Los enlaces de reproducción funcionan.
+- [ ] Los estados de interrupción se comunican.
+- [ ] No se duplicó la plataforma de streaming.
+
+### Administración
+
+- [ ] El panel utiliza un diseño consistente.
+- [ ] Los formularios validan correctamente.
+- [ ] La carga del fixture sigue el modelo de enfrentamientos.
+- [ ] Los encuentros por categoría se generan según las reglas originales.
+- [ ] Las operaciones presentan confirmación y errores.
+- [ ] Las funciones protegidas requieren autenticación.
+- [ ] No existe edición manual paralela de resultados oficiales.
+
+### Responsive y accesibilidad
+
+- [ ] No existe scroll horizontal global a 320, 375, 768, 1024 y 1440 px.
+- [ ] Los controles táctiles son utilizables.
+- [ ] Los textos no se superponen.
+- [ ] Los escudos conservan proporciones.
+- [ ] Los menús se operan con teclado.
+- [ ] Las tablas son legibles.
+- [ ] Los estados se comunican con texto y no solo color.
+- [ ] Los componentes contemplan loading, empty, error y unavailable.
+
+---
+
+# 22. Estrategia de implementación en OpenCode
+
+Antes de modificar archivos:
+
+1. Analizar la estructura existente del repositorio.
+2. Revisar la especificación funcional original.
+3. Identificar componentes, rutas y servicios ya implementados.
+4. Detectar dependencias instaladas.
+5. Identificar endpoints disponibles.
+6. Proponer o registrar una estructura de frontend coherente con el proyecto.
+7. No sobrescribir implementaciones existentes sin revisar sus contratos.
+
+Orden de desarrollo recomendado:
+
+**Fase A — Design system**
+
+- Tokens visuales.
+- Tipografías.
+- Componentes UI.
+- Layout público.
+- Header responsive.
+- Footer.
+- Layout administrativo.
+
+**Fase B — Páginas públicas**
+
+- Portada.
+- Competiciones.
+- Fixture.
+- Resultados.
+- Posiciones.
+- Soler TV.
+- El Club.
+- Galería.
+- Contacto.
+
+**Fase C — Administración**
+
+- Login.
+- Dashboard.
+- CRUD visuales.
+- Fixture administrativo.
+- Carga de imágenes.
+- Gestión de contenidos.
+
+**Fase D — Integraciones frontend**
+
+- Servicios API.
+- Tipos.
+- Estados de consulta.
+- Filtros sincronizados con URL.
+- Autenticación administrativa.
+- Manejo de errores.
+
+**Fase E — Calidad visual**
+
+- Responsive.
+- Accesibilidad.
+- SEO.
+- Rendimiento.
+- Pruebas.
+- Verificación en diferentes resoluciones.
+
+No crear una interfaz visualmente terminada cuyos botones y filtros sean simples simulaciones.
+
+No considerar completada una pantalla hasta validar su comportamiento real o, si depende de una API todavía no implementada, documentar explícitamente esa dependencia.
+
+---
+
+# 23. Instrucciones finales
+
+El diseño debe combinar la claridad de una plataforma de resultados deportivos con la identidad emocional de un club de barrio.
+
+Priorizar siempre:
+
+1. Facilidad de consulta.
+2. Identidad de Soler.
+3. Experiencia móvil.
+4. Claridad deportiva.
+5. Coherencia visual.
+6. Accesibilidad.
+7. Rendimiento.
+8. Mantenibilidad.
+
+No reemplazar las reglas funcionales existentes.
+
+No modificar la arquitectura de backend por cuestiones exclusivamente visuales.
+
+No inventar información deportiva para completar diseños.
+
+No agregar funcionalidades no solicitadas como tienda, inscripción online, socios, venta de entradas, perfiles de jugadores, estadísticas individuales, noticias o comentarios públicos.
+
+**Resultado esperado:** un frontend completo, atractivo, responsive, funcional y coherente, preparado para representar al Club Social y Deportivo Soler como el centro de información deportiva e institucional de su comunidad, integrado con su sistema de administración, Ligas Deportivas y la plataforma Soler TV existente.

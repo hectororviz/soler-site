@@ -1,0 +1,71 @@
+name: csd-soler-prod
+# Producción en VPS con caddy-docker-proxy (red externa caddy-net).
+# Las imágenes vienen de GHCR (CI las publica). Variables en .env del VPS.
+# Nunca bindea 80/443: Caddy descubre los servicios por labels.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?}
+      POSTGRES_DB: csd_soler
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    image: ${BACKEND_IMAGE:?}
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?}@postgres:5432/csd_soler?schema=public
+      JWT_SECRET: ${JWT_SECRET:?}
+      ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?}
+      PORT: 3000
+      CORS_ORIGIN: https://csdsoler.com.ar
+      FILES_DIR: /app/uploads
+      SEED_ON_BOOT: ${SEED_ON_BOOT:-true}
+    volumes:
+      - uploads:/app/uploads
+    networks:
+      - internal
+      - caddy-net
+    labels:
+      caddy: api.csdsoler.com.ar
+      caddy.reverse_proxy: "{{upstreams 3000}}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:3000/api/v1/health || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  frontend:
+    image: ${FRONTEND_IMAGE:?}
+    restart: unless-stopped
+    depends_on:
+      - backend
+    networks:
+      - caddy-net
+    labels:
+      caddy: csdsoler.com.ar
+      caddy.reverse_proxy: "{{upstreams 80}}"
+
+volumes:
+  pgdata:
+  uploads:
+
+networks:
+  caddy-net:
+    external: true
+    name: caddy-net
+  internal:

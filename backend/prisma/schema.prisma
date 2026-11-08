@@ -1,0 +1,169 @@
+// CSD Soler — modelo de datos propio (spec §5.3).
+// Los datos de Ligas Deportivas NO se duplican acá: solo se guardan
+// correspondencias de IDs externos (externalId) para el módulo de integración.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  username     String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Season {
+  id         String       @id @default(cuid())
+  label      String       @unique // ej. "2026"
+  active     Boolean      @default(true)
+  createdAt  DateTime     @default(now())
+  tournaments Tournament[]
+}
+
+model Tournament {
+  id          String   @id @default(cuid())
+  slug        String   @unique
+  name        String
+  description String?
+  seasonId    String
+  season      Season   @relation(fields: [seasonId], references: [id], onDelete: Cascade)
+  // Correspondencia con torneo externo (Ligas Deportivas), nunca solo por nombre.
+  externalId  String?
+  createdAt   DateTime @default(now())
+
+  categories   Category[]
+  participants TournamentParticipant[]
+  matchdays    Matchday[]
+
+  @@index([seasonId])
+}
+
+model Category {
+  id           String     @id @default(cuid())
+  slug         String
+  name         String
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  externalId   String?
+  order        Int        @default(0)
+  createdAt    DateTime   @default(now())
+
+  categoryMatches CategoryMatch[]
+
+  @@unique([tournamentId, slug])
+  @@index([tournamentId])
+}
+
+model Club {
+  id         String   @id @default(cuid())
+  name       String
+  shortName  String
+  slug       String   @unique
+  crestPath  String?
+  externalId String?
+  createdAt  DateTime @default(now())
+
+  participations TournamentParticipant[]
+  homeMatches    FixtureMatch[]          @relation("HomeClub")
+  awayMatches    FixtureMatch[]          @relation("AwayClub")
+}
+
+model TournamentParticipant {
+  id           String     @id @default(cuid())
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  clubId       String
+  club         Club       @relation(fields: [clubId], references: [id], onDelete: Cascade)
+  // Categorías habilitadas para este club en este torneo. Vacío = todas.
+  categoryIds  String[]   @default([])
+  createdAt    DateTime   @default(now())
+
+  @@unique([tournamentId, clubId])
+  @@index([tournamentId])
+}
+
+model Matchday {
+  id           String     @id @default(cuid())
+  label        String // ej. "Fecha 8"
+  order        Int        @default(0)
+  published    Boolean    @default(false)
+  tournamentId String
+  tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  createdAt    DateTime   @default(now())
+
+  matches FixtureMatch[]
+
+  @@unique([tournamentId, label])
+  @@index([tournamentId])
+}
+
+model FixtureMatch {
+  id         String   @id @default(cuid())
+  matchdayId String
+  matchday   Matchday @relation(fields: [matchdayId], references: [id], onDelete: Cascade)
+  homeClubId String
+  homeClub   Club     @relation("HomeClub", fields: [homeClubId], references: [id])
+  awayClubId String
+  awayClub   Club     @relation("AwayClub", fields: [awayClubId], references: [id])
+  createdAt  DateTime @default(now())
+
+  categories CategoryMatch[]
+
+  // Sin enfrentamientos duplicados por fecha (mismo par en cualquier orden).
+  @@index([matchdayId])
+}
+
+model CategoryMatch {
+  id             String       @id @default(cuid())
+  fixtureMatchId String
+  fixtureMatch   FixtureMatch @relation(fields: [fixtureMatchId], references: [id], onDelete: Cascade)
+  categoryId     String
+  category       Category     @relation(fields: [categoryId], references: [id])
+  kickoff        DateTime?
+  venue          String?
+  // Estado deportivo base; el marcador oficial vive en Ligas Deportivas.
+  status         String       @default("PROGRAMADO")
+  createdAt      DateTime     @default(now())
+
+  broadcasts Broadcast[]
+
+  @@unique([fixtureMatchId, categoryId])
+  @@index([categoryId])
+}
+
+model Broadcast {
+  id              String        @id @default(cuid())
+  status          String        @default("PROGRAMADA")
+  categoryMatchId String
+  categoryMatch   CategoryMatch @relation(fields: [categoryMatchId], references: [id], onDelete: Cascade)
+  streamUrl       String?
+  embedUrl        String?
+  createdAt       DateTime      @default(now())
+
+  @@index([categoryMatchId])
+}
+
+model PageContent {
+  id        String   @id @default(cuid())
+  slot      String   @unique // club | contacto | hero ...
+  title     String?
+  body      String?
+  imagePath String?
+  updatedAt DateTime @updatedAt
+}
+
+model Sponsor {
+  id        String   @id @default(cuid())
+  name      String
+  logoPath  String?
+  href      String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
