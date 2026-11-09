@@ -46,6 +46,11 @@ export class AdminFixturesController {
     return this.fixtures.createFixtureMatch(id, dto.homeClubId, dto.awayClubId);
   }
 
+  @Patch('matches/:id/status')
+  setMatchStatus(@Param('id') id: string, @Body() dto: CategoryMatchDto) {
+    return this.fixtures.updateFixtureMatchStatus(id, dto.status!);
+  }
+
   @Delete('matches/:id')
   removeMatch(@Param('id') id: string) {
     return this.fixtures.removeFixtureMatch(id);

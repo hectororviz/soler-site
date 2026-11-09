@@ -103,6 +103,10 @@ export function FixtureAdminPage() {
     w.run(() => api.patch(`/admin/category-matches/${catId}`, data, { admin: true }), refresh);
   };
 
+  const setMatchStatus = (matchId: string, status: string) => {
+    w.run(() => api.patch(`/admin/matches/${matchId}/status`, { status }, { admin: true }), refresh);
+  };
+
   const removeMatch = (matchId: string) => {
     w.run(() => api.del(`/admin/matches/${matchId}`, { admin: true }), refresh);
   };
@@ -203,6 +207,7 @@ export function FixtureAdminPage() {
                       key={m.id}
                       clash={m}
                       onSave={saveCategory}
+                      onWhole={(status) => setMatchStatus(m.id, status)}
                       onRemove={() => removeMatch(m.id)}
                     />
                   ))}
@@ -221,9 +226,10 @@ export function FixtureAdminPage() {
   );
 }
 
-function ClashEditor({ clash, onSave, onRemove }: {
+function ClashEditor({ clash, onSave, onWhole, onRemove }: {
   clash: DetailClash;
   onSave: (catId: string, data: { kickoff?: string; venue?: string; status?: string }) => void;
+  onWhole: (status: string) => void;
   onRemove: () => void;
 }) {
   const [open, setOpen] = useState(false);
@@ -249,6 +255,8 @@ function ClashEditor({ clash, onSave, onRemove }: {
     setEditing(null);
   };
 
+  const allPlayed = clash.categories.length > 0 && clash.categories.every((c) => c.status === 'FINALIZADO');
+
   return (
     <article className="rounded-card border border-line p-3">
       <div className="flex flex-wrap items-center gap-2 font-semibold">
@@ -261,6 +269,11 @@ function ClashEditor({ clash, onSave, onRemove }: {
           <button onClick={() => setOpen((v) => !v)} className="text-sm font-semibold text-primary hover:underline">
             {open ? 'Ocultar categorías' : `Ver categorías (${clash.categories.length})`}
           </button>
+          {allPlayed ? (
+            <button onClick={() => onWhole('PROGRAMADO')} className="text-sm font-semibold text-primary hover:underline">Reabrir cruce</button>
+          ) : (
+            <button onClick={() => onWhole('FINALIZADO')} className="text-sm font-semibold text-primary hover:underline">Marcar jugado</button>
+          )}
           <ConfirmButton onConfirm={onRemove}>Eliminar cruce</ConfirmButton>
         </span>
       </div>
@@ -291,14 +304,7 @@ function ClashEditor({ clash, onSave, onRemove }: {
               <div className="flex flex-wrap items-center justify-between gap-2 text-sm">
                 <span className="font-semibold">{c.category?.name}</span>
                 <span className="text-ink-muted">{formatKickoff(c.kickoff)}{c.venue ? ` · ${c.venue}` : ''} · {c.status}</span>
-                <span className="inline-flex gap-2">
-                  <button onClick={() => start(c)} className="font-semibold text-primary hover:underline">Editar</button>
-                  {c.status !== 'FINALIZADO' ? (
-                    <button onClick={() => onSave(c.id, { status: 'FINALIZADO' })} className="font-semibold text-primary hover:underline">Marcar jugado</button>
-                  ) : (
-                    <button onClick={() => onSave(c.id, { status: 'PROGRAMADO' })} className="font-semibold text-primary hover:underline">Reabrir</button>
-                  )}
-                </span>
+                <button onClick={() => start(c)} className="font-semibold text-primary hover:underline">Editar</button>
               </div>
             )}
           </li>

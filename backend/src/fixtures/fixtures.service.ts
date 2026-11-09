@@ -99,6 +99,20 @@ export class FixturesService {
     });
   }
 
+  /** Marca todo el cruce (todos sus encuentros por categoría). */
+  async updateFixtureMatchStatus(id: string, status: string) {
+    if (!['PROGRAMADO', 'PROXIMO', 'EN_VIVO', 'FINALIZADO', 'SUSPENDIDO'].includes(status)) {
+      throw new BadRequestException('Estado inválido.');
+    }
+    const m = await this.prisma.fixtureMatch.findUnique({ where: { id } });
+    if (!m) throw new NotFoundException('Cruce inexistente.');
+    await this.prisma.categoryMatch.updateMany({ where: { fixtureMatchId: id }, data: { status } });
+    return this.prisma.fixtureMatch.findUnique({
+      where: { id },
+      include: { homeClub: true, awayClub: true, categories: { include: { category: true, broadcasts: true } } },
+    });
+  }
+
   // ---------- Segunda rueda: espeja las fechas existentes ----------
   /**
    * Genera la segunda rueda espejando las fechas actuales del torneo
