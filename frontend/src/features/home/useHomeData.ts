@@ -50,7 +50,7 @@ export function useResults(torneo?: string) {
   const q = useQuery({
     queryKey: ['results-recent', torneo ?? 'all'],
     queryFn: () => fetchOrMock<MatchSummary[]>(
-      torneo ? `/results?torneo=${encodeURIComponent(torneo)}&limit=20` : '/results?limit=6',
+      torneo ? `/results?torneo=${encodeURIComponent(torneo)}&limit=100` : '/results?limit=6',
       mockResults,
     ),
     retry: 1,

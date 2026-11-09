@@ -63,6 +63,8 @@ export interface MatchSummary {
   id: string;
   tournamentName: string;
   categoryName: string;
+  /** Slug de la categoría propia (presente en resultados de Ligas). */
+  categorySlug?: string;
   roundLabel: string;
   home: Club;
   away: Club;

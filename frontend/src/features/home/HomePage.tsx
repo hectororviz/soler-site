@@ -7,10 +7,13 @@ import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../co
 import { Container } from '../../components/layout/Container';
 import { BroadcastCard } from '../../components/sports/BroadcastCard';
 import { ClubBadge } from '../../components/sports/badges';
+import { clubCrest } from '../../services/api';
 import { formatKickoff } from '../../lib/format';
 import { cn } from '../../lib/utils';
-import type { UpcomingClash } from '../../types';
+import type { Club, UpcomingClash } from '../../types';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
+import { useCategories, useTournaments } from '../fixtures/useFixture';
+
 import { usePageTitle } from '../../lib/usePageTitle';
 
 /** Fila con scroll horizontal arrastrable (mouse/táctil), sin barra visible + flechas. */
@@ -77,25 +80,37 @@ function DragRow({ children, title }: { children: ReactNode; title?: ReactNode }
   );
 }
 
-function ResultRow({ slug, label }: { slug: string; label: string }) {
+function ResultRow({ tournamentId, slug, label }: { tournamentId: string; slug: string; label: string }) {
   const r = useResults(slug);
-  if (r.status === 'loading') {
+  const catsQ = useCategories(tournamentId);
+  if (r.status === 'loading' || catsQ.isPending) {
     return (
       <div className="mt-4">
-        <p className="mb-2 text-sm font-bold uppercase text-ink-muted">{label}</p>
-        <div className="flex gap-4 overflow-hidden"><Skeleton className="h-44 w-80 shrink-0" /></div>
+        <DragRow title={label}>
+          <Skeleton className="h-44 w-80 shrink-0" />
+        </DragRow>
       </div>
     );
   }
   if (r.status !== 'ready') return null;
-  const soler = r.data
-    .filter((m) => [m.home.shortName, m.home.name, m.away.shortName, m.away.name].some((v) => v?.toLowerCase().includes('soler')))
-    .slice(0, 6);
-  if (!soler.length) return null;
+  const soler = r.data.filter((m) =>
+    [m.home.shortName, m.home.name, m.away.shortName, m.away.name].some((v) => v?.toLowerCase().includes('soler')),
+  );
+  // Último resultado por categoría, ordenado como las categorías del torneo.
+  const latest = new Map<string, (typeof soler)[number]>();
+  for (const m of soler) {
+    const key = m.categorySlug ?? m.categoryName;
+    if (!latest.has(key)) latest.set(key, m);
+  }
+  const order = new Map((catsQ.data ?? []).map((c, i) => [c.slug, i]));
+  const cards = [...latest.values()].sort(
+    (a, b) => (order.get(a.categorySlug ?? '') ?? 999) - (order.get(b.categorySlug ?? '') ?? 999),
+  );
+  if (!cards.length) return null;
   return (
     <div className="mt-6 select-none">
       <DragRow title={label}>
-        {soler.map((m) => (
+        {cards.map((m) => (
           <HomeResultCard key={m.id} match={m} />
         ))}
       </DragRow>
@@ -103,7 +118,7 @@ function ResultRow({ slug, label }: { slug: string; label: string }) {
   );
 }
 
-function HomeResultCard({ match }: { match: { id: string; tournamentName: string; categoryName: string; roundLabel: string; home: { shortName: string; name: string }; away: { shortName: string; name: string }; homeScore: number | null; awayScore: number | null; kickoff: string | null; venue: string | null } }) {
+function HomeResultCard({ match }: { match: { id: string; tournamentName: string; categoryName: string; roundLabel: string; home: Club; away: Club; homeScore: number | null; awayScore: number | null; kickoff: string | null; venue: string | null } }) {
   return (
     <article className="w-80 shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-soft sm:w-96">
       <div className="flex items-center justify-between gap-2 text-[13px]">
@@ -113,7 +128,7 @@ function HomeResultCard({ match }: { match: { id: string; tournamentName: string
       <p className="mt-2 font-display text-lg font-extrabold uppercase tracking-wide">{match.categoryName}</p>
       <div className="mt-2 flex items-center justify-between gap-2">
         <span className="flex min-w-0 flex-1 items-center gap-2">
-          <MiniCrest name={match.home.shortName} />
+          <CrestImg club={match.home} />
           <span className="truncate text-sm font-bold">{match.home.shortName}</span>
         </span>
         <span className="shrink-0 font-display text-3xl font-extrabold tabular-nums">
@@ -121,7 +136,7 @@ function HomeResultCard({ match }: { match: { id: string; tournamentName: string
         </span>
         <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
           <span className="truncate text-right text-sm font-bold">{match.away.shortName}</span>
-          <MiniCrest name={match.away.shortName} />
+          <CrestImg club={match.away} />
         </span>
       </div>
       <p className="mt-2 text-[13px] text-ink-muted">
@@ -132,15 +147,19 @@ function HomeResultCard({ match }: { match: { id: string; tournamentName: string
   );
 }
 
-function MiniCrest({ name }: { name: string }) {
-  return (
-    <span
-      aria-hidden
-      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pitch font-display text-xs font-bold text-gold"
-    >
-      {name.slice(0, 2).toUpperCase()}
-    </span>
-  );
+function CrestImg({ club }: { club: Club }) {
+  const src = clubCrest(club);
+  if (!src) {
+    return (
+      <span
+        aria-hidden
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pitch font-display text-xs font-bold text-gold"
+      >
+        {club.shortName.slice(0, 2).toUpperCase()}
+      </span>
+    );
+  }
+  return <img src={src} alt={`Escudo de ${club.name}`} className="h-8 w-8 shrink-0 object-contain" loading="lazy" />;
 }
 
 function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {  return (
@@ -204,6 +223,8 @@ export function HomePage() {
   usePageMeta();
   const upcoming = useUpcoming();
   const live = useLiveBroadcast();
+  const tournamentsQ = useTournaments();
+  const tournamentsBySlug = new Map((tournamentsQ.data ?? []).map((t) => [t.slug, t.id]));
 
   return (
     <>
@@ -291,9 +312,9 @@ export function HomePage() {
           description="Marcadores confirmados desde Ligas Deportivas. Nunca mostramos resultados inventados."
           link={<Link to="/resultados" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">Todos los resultados <ArrowRight size={15} /></Link>}
         />
-        <ResultRow slug="futbol-femenino" label="Fútbol Femenino" />
-        <ResultRow slug="juveniles-sabados" label="Juveniles Sábados" />
-        <ResultRow slug="juveniles-domingos" label="Juveniles Domingos" />
+        <ResultRow slug="futbol-femenino" label="Fútbol Femenino" tournamentId={tournamentsBySlug.get('futbol-femenino') ?? ''} />
+        <ResultRow slug="juveniles-sabados" label="Juveniles Sábados" tournamentId={tournamentsBySlug.get('juveniles-sabados') ?? ''} />
+        <ResultRow slug="juveniles-domingos" label="Juveniles Domingos" tournamentId={tournamentsBySlug.get('juveniles-domingos') ?? ''} />
       </Container>
 
       {/* 5. Competiciones */}
