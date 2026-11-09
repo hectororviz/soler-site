@@ -41,7 +41,13 @@ function ShareButton() {
 }
 
 function ClashCard({ clash }: { clash: FixtureClash }) {
-  const [open, setOpen] = useState(clash.isSoler);
+  const [open, setOpen] = useState(false);
+  const isSoler = (c: { shortName: string; name: string; slug?: string }) =>
+    [c.slug, c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
+  const homeSoler = isSoler(clash.home);
+  const awaySoler = isSoler(clash.away);
+  const firstKickoff = clash.categories.find((c) => c.kickoff)?.kickoff ?? null;
+  const venue = clash.categories.find((c) => c.venue)?.venue ?? null;
   return (
     <article
       className={cn(
@@ -55,9 +61,12 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
         className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
       >
         <span className="flex flex-1 items-center justify-between gap-2">
-          <ClubBadge club={clash.home} />
+          <ClubBadge club={clash.home} strong={homeSoler} />
           <span className="font-display text-lg font-bold text-ink-muted">VS</span>
-          <ClubBadge club={clash.away} />
+          <ClubBadge club={clash.away} strong={awaySoler} />
+        </span>
+        <span className="hidden shrink-0 text-[13px] text-ink-muted sm:block">
+          {formatKickoff(firstKickoff)}{venue ? ` · ${venue}` : ''}
         </span>
         <ChevronDown size={18} className={cn('shrink-0 transition-transform', open && 'rotate-180')} aria-hidden />
       </button>
@@ -184,8 +193,12 @@ export function FixturePage() {
             <Button variant="secondary" size="sm" onClick={() => goRound(-1)} disabled={index <= 0} aria-label="Fecha anterior">
               <ArrowLeft size={16} /> Anterior
             </Button>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="font-display text-2xl font-extrabold uppercase" aria-live="polite">{round?.label}</span>
+              {round && round.matches.length > 0 &&
+                round.matches.every((m) => m.categories.length > 0 && m.categories.every((c) => c.status === 'FINALIZADO')) && (
+                  <span className="rounded-full bg-pitch px-2.5 py-1 text-xs font-bold text-white">Jugada</span>
+                )}
               <select
                 value={round?.id ?? ''}
                 onChange={(e) => setFilters({ fecha: e.target.value })}

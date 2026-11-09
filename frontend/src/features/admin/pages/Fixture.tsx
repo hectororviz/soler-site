@@ -54,10 +54,11 @@ export function FixtureAdminPage() {
   const selected = (days.data ?? []).find((d) => d.id === dayId) ?? (days.data ?? [])[0];
 
   const [newLabel, setNewLabel] = useState('');
+  const [newDate, setNewDate] = useState('');
   const [homeId, setHomeId] = useState('');
   const [awayId, setAwayId] = useState('');
   const [pending, setPending] = useState(false);
-  const w = useAdminWrite(() => { setNewLabel(''); setHomeId(''); setAwayId(''); });
+  const w = useAdminWrite(() => { setNewLabel(''); setNewDate(''); setHomeId(''); setAwayId(''); });
 
   const refresh = ['admin-matchdays'];
 
@@ -68,9 +69,17 @@ export function FixtureAdminPage() {
     if (!active || !newLabel.trim()) return;
     setPending(true);
     w.run(
-      () => api.post('/admin/matchdays', { tournamentId: active.id, label: newLabel.trim() }, { admin: true }),
+      () => api.post('/admin/matchdays', { tournamentId: active.id, label: newLabel.trim(), date: newDate || undefined }, { admin: true }),
       refresh,
     ).finally(() => setPending(false));
+  };
+
+  const saveDay = (label: string, date: string | null) => {
+    if (!selected) return;
+    w.run(
+      () => api.patch(`/admin/matchdays/${selected.id}`, { label, date }, { admin: true }),
+      refresh,
+    );
   };
 
   const addMatch = () => {
@@ -137,6 +146,9 @@ export function FixtureAdminPage() {
               <Field label="Etiqueta (ej. Fecha 9)">
                 <input className={inputCls} value={newLabel} onChange={(e) => setNewLabel(e.target.value)} placeholder="Fecha 9" />
               </Field>
+              <Field label="Día (opcional)">
+                <input type="date" className={inputCls} value={newDate} onChange={(e) => setNewDate(e.target.value)} />
+              </Field>
             </InlineForm>
             <ul className="mt-3 space-y-1">
               {(days.data ?? []).map((d) => (
@@ -145,7 +157,9 @@ export function FixtureAdminPage() {
                     onClick={() => setDayId(d.id)}
                     className={`flex w-full items-center justify-between rounded-card border px-3 py-2 text-left text-sm ${d.id === selected?.id ? 'border-primary bg-primary-soft font-bold' : 'border-line'}`}
                   >
-                    <span>{d.label} <span className="text-ink-muted">({d.matches.length})</span></span>
+                    <span>{d.label} <span className="text-ink-muted">({d.matches.length})</span>
+                      {d.date ? <span className="text-ink-muted"> · {new Date(d.date).toLocaleDateString()}</span> : null}
+                    </span>
                     <span className={d.published ? 'font-bold text-field' : 'text-ink-muted'}>
                       {d.published ? 'Publicada' : 'Borrador'}
                     </span>
@@ -181,6 +195,7 @@ export function FixtureAdminPage() {
           >
             {selected ? (
               <>
+                <DayEditor key={selected.id} day={selected} onSave={saveDay} />
                 <InlineForm onSubmit={addMatch} pending={pending} submitLabel="Agregar cruce">
                   <Field label="Local">
                     <select className={inputCls} value={homeId} onChange={(e) => setHomeId(e.target.value)}>
@@ -223,6 +238,31 @@ export function FixtureAdminPage() {
         </div>
       )}
     </AdminPage>
+  );
+}
+
+function DayEditor({ day, onSave }: {
+  day: { label: string; date: string | null };
+  onSave: (label: string, date: string | null) => void;
+}) {
+  const toInput = (iso: string | null) => (iso ? iso.slice(0, 10) : '');
+  const [label, setLabel] = useState(day.label);
+  const [date, setDate] = useState(toInput(day.date));
+  return (
+    <form
+      onSubmit={(e) => { e.preventDefault(); onSave(label.trim() || day.label, date || null); }}
+      className="mb-3 flex flex-wrap items-end gap-3 rounded-card bg-black/[0.03] p-3"
+    >
+      <Field label="Etiqueta">
+        <input className={inputCls} value={label} onChange={(e) => setLabel(e.target.value)} />
+      </Field>
+      <Field label="Día">
+        <input type="date" className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} />
+      </Field>
+      <button type="submit" className="inline-flex h-11 items-center rounded-card bg-pitch px-5 font-bold text-white hover:bg-black">
+        Guardar fecha
+      </button>
+    </form>
   );
 }
 

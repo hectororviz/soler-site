@@ -5,6 +5,22 @@ import { toPublicClub } from '../catalog/club-mapper';
 const isSolerClub = (c: any) =>
   c && [c.slug, c.shortName, c.name].some((v: string) => v?.toLowerCase().includes('soler'));
 
+/**
+ * Horario efectivo: el cargado por partido, o día de la fecha + hora fija
+ * de la categoría ("15:00"). Devuelve ISO local sin zona para que el
+ * navegador lo interprete en hora local.
+ */
+function effectiveKickoff(override: any, matchdayDate: any, categoryTime?: string | null): string | null {
+  if (override) return override;
+  if (!matchdayDate || !categoryTime) return null;
+  const m = /^(\d{1,2}):(\d{2})/.exec(categoryTime);
+  if (!m) return null;
+  const d = new Date(matchdayDate);
+  if (Number.isNaN(d.getTime())) return null;
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())}T${pad(parseInt(m[1], 10))}:${m[2]}:00`;
+}
+
 const SOLER_SHORT = 'soler'; // legado: se usa isSolerClub (slug/nombre), no igualdad exacta
 
 @Injectable()
@@ -29,12 +45,24 @@ export class FixturesService {
     return this.prisma.matchday.findUnique({ where: { id }, include: this.matchInclude() });
   }
 
-  async createMatchday(tournamentId: string, label: string, order = 0) {
+  async createMatchday(tournamentId: string, label: string, order = 0, date?: Date) {
     const t = await this.prisma.tournament.findUnique({ where: { id: tournamentId } });
     if (!t) throw new BadRequestException('Torneo inexistente.');
     const dup = await this.prisma.matchday.findUnique({ where: { tournamentId_label: { tournamentId, label } } });
     if (dup) throw new BadRequestException('Ya existe una fecha con esa etiqueta en este torneo.');
-    return this.prisma.matchday.create({ data: { tournamentId, label, order } });
+    return this.prisma.matchday.create({ data: { tournamentId, label, order, date } });
+  }
+
+  async updateMatchday(id: string, data: { label?: string; date?: string | null }) {
+    const clean: any = {};
+    if (data.label !== undefined) clean.label = data.label;
+    if (data.date !== undefined) clean.date = data.date ? new Date(data.date) : null;
+    if (clean.date instanceof Date && Number.isNaN(clean.date.getTime())) {
+      throw new BadRequestException('Fecha inválida.');
+    }
+    return this.prisma.matchday.update({ where: { id }, data: clean }).catch(() => {
+      throw new NotFoundException('Fecha inexistente.');
+    });
   }
 
   async publishMatchday(id: string, published: boolean) {
@@ -189,7 +217,7 @@ export class FixturesService {
         id: c.id,
         categoryId: c.categoryId,
         categoryName: c.category?.name ?? c.categoryId,
-        kickoff: c.kickoff,
+        kickoff: effectiveKickoff(c.kickoff, (matchday as any).date, c.category?.kickoffTime),
         venue: c.venue,
         status: c.status,
         homeScore: null, // el marcador oficial vive en Ligas Deportivas (Etapa 3)
@@ -247,7 +275,7 @@ export class FixturesService {
       if (!byT.has(p.tournamentId)) byT.set(p.tournamentId, []);
       byT.get(p.tournamentId)!.push(p.club);
     }
-    let shaped = days.map((d: any) => this.shape(d, byT.get(d.tournamentId) ?? []));
+    let shaped = days.map((d: any) => this.shape(d, byT.get(d.tournamentId) ?? [], true));
     if (categorySlug) {
       shaped = shaped
         .map((d: any) => ({

@@ -52,6 +52,8 @@ model Category {
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   externalId   String?
   order        Int        @default(0)
+  // Hora fija de juego para esta categoría en el torneo ("15:00"). Si es null, se usa el horario cargado por partido.
+  kickoffTime  String?
   createdAt    DateTime   @default(now())
 
   categoryMatches CategoryMatch[]
@@ -93,6 +95,8 @@ model Matchday {
   label        String // ej. "Fecha 8"
   order        Int        @default(0)
   published    Boolean    @default(false)
+  // Día en que se juega la fecha (todas las categorías). La hora la aporta cada categoría.
+  date         DateTime?
   tournamentId String
   tournament   Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())

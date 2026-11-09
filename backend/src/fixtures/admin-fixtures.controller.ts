@@ -7,6 +7,11 @@ class MatchdayDto {
   @IsString() tournamentId!: string;
   @IsString() label!: string;
   @IsOptional() order?: number;
+  @IsOptional() @IsString() date?: string;
+}
+class MatchdayUpdateDto {
+  @IsOptional() @IsString() label?: string;
+  @IsOptional() @IsString() date?: string | null;
 }
 class FixtureMatchDto {
   @IsString() homeClubId!: string;
@@ -38,7 +43,14 @@ export class AdminFixturesController {
 
   @Post('matchdays')
   createMatchday(@Body() dto: MatchdayDto) {
-    return this.fixtures.createMatchday(dto.tournamentId, dto.label, dto.order ?? 0);
+    const data: any = { tournamentId: dto.tournamentId, label: dto.label, order: dto.order ?? 0 };
+    if (dto.date) data.date = new Date(dto.date);
+    return this.fixtures.createMatchday(data.tournamentId, data.label, data.order, data.date);
+  }
+
+  @Patch('matchdays/:id')
+  updateMatchday(@Param('id') id: string, @Body() dto: MatchdayUpdateDto) {
+    return this.fixtures.updateMatchday(id, dto);
   }
 
   @Post('matchdays/:id/matches')

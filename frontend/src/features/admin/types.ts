@@ -20,6 +20,7 @@ export interface AdminCategory {
   name: string;
   tournamentId: string;
   order: number;
+  kickoffTime: string | null;
 }
 
 export interface AdminClub {
@@ -45,6 +46,7 @@ export interface AdminMatchday {
   order: number;
   published: boolean;
   tournamentId: string;
+  date: string | null;
   _count?: { matches: number };
 }
 

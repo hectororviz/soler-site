@@ -7,10 +7,12 @@ export function ClubBadge({
   club,
   size = 'md',
   showName = true,
+  strong = false,
 }: {
   club: Club;
   size?: 'sm' | 'md' | 'lg';
   showName?: boolean;
+  strong?: boolean;
 }) {
   const box = size === 'lg' ? 'h-14 w-14 text-lg' : size === 'sm' ? 'h-9 w-9 text-xs' : 'h-11 w-11 text-sm';
   const src = clubCrest(club);
@@ -26,7 +28,7 @@ export function ClubBadge({
           {club.shortName.slice(0, 2).toUpperCase()}
         </span>
       )}
-      {showName && <span className="font-semibold">{club.shortName}</span>}
+      {showName && <span className={strong ? 'font-extrabold' : 'font-semibold'}>{club.shortName}</span>}
     </span>
   );
 }

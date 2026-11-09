@@ -53,10 +53,23 @@ export class CatalogService {
   categories(tournamentId: string) {
     return this.prisma.category.findMany({ where: { tournamentId }, orderBy: { order: 'asc' } });
   }
-  async createCategory(data: { tournamentId: string; name: string; slug?: string; externalId?: string; order?: number }) {
+  async createCategory(data: { tournamentId: string; name: string; slug?: string; externalId?: string; order?: number; kickoffTime?: string | null }) {
     const t = await this.prisma.tournament.findUnique({ where: { id: data.tournamentId } });
     if (!t) throw new BadRequestException('Torneo inexistente.');
+    if (data.kickoffTime !== undefined && data.kickoffTime !== null && !/^\d{1,2}:\d{2}$/.test(data.kickoffTime)) {
+      throw new BadRequestException('Hora inválida (formato HH:MM).');
+    }
     return this.prisma.category.create({ data: { ...data, slug: data.slug ?? slugify(data.name) } });
+  }
+  async updateCategory(id: string, data: { name?: string; externalId?: string; kickoffTime?: string | null }) {
+    if (data.kickoffTime !== undefined && data.kickoffTime !== null && data.kickoffTime !== '' && !/^\d{1,2}:\d{2}$/.test(data.kickoffTime)) {
+      throw new BadRequestException('Hora inválida (formato HH:MM).');
+    }
+    const clean: any = { ...data };
+    if (clean.kickoffTime === '') clean.kickoffTime = null;
+    return this.prisma.category.update({ where: { id }, data: clean }).catch(() => {
+      throw new NotFoundException('Categoría inexistente.');
+    });
   }
 
   // ---- Clubs ----
