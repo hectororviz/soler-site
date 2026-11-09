@@ -298,6 +298,7 @@ export class FixturesService {
     const out: any[] = [];
     for (const d of days) {
       for (const m of this.shape(d, [], true).matches) {
+        if (!isSolerClub(m.home) && !isSolerClub(m.away)) continue;
         for (const c of m.categories) {
           if (['PROGRAMADO', 'PROXIMO'].includes(c.status) && c.kickoff) {
             out.push({

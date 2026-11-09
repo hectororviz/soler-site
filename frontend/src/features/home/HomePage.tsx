@@ -100,7 +100,7 @@ export function HomePage() {
       <Container className="mt-12">
         <SectionHeading
           title="Próximos partidos"
-          description="Lo próximo de Soler y del torneo. Horarios y sedes pueden variar por categoría."
+          description="Lo próximo de Soler. Horarios y sedes pueden variar por categoría."
           link={<Link to="/fixture" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">Fixture completo <ArrowRight size={15} /></Link>}
         />
         {upcoming.status === 'loading' && (

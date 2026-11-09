@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronDown, Link2, Radio, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ChevronDown, Link2, Check } from 'lucide-react';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
@@ -41,7 +41,8 @@ function ShareButton() {
 }
 
 function ClashCard({ clash }: { clash: FixtureClash }) {
-  const [open, setOpen] = useState(false);
+  const solerHere = [clash.home.shortName, clash.home.name, clash.away.shortName, clash.away.name].some((v) => v?.toLowerCase().includes('soler'));
+  const [open, setOpen] = useState(solerHere);
   const isSoler = (c: { shortName: string; name: string; slug?: string }) =>
     [c.slug, c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
   const homeSoler = isSoler(clash.home);
@@ -79,13 +80,6 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
                 {formatKickoff(c.kickoff)}
                 {c.venue ? ` · ${c.venue}` : ''}
               </span>
-              {c.broadcastId ? (
-                <span className="inline-flex items-center gap-1 font-semibold text-primary">
-                  <Radio size={14} aria-hidden /> Con transmisión
-                </span>
-              ) : (
-                <span className="text-[13px] text-ink-muted">Sin transmisión</span>
-              )}
             </li>
           ))}
         </ul>
@@ -108,7 +102,12 @@ export function FixturePage() {
   const categoriesQ = useCategories(activeTournament?.id ?? '');
   const roundsQ = useFixtureRounds(activeSlug, filters.categoria);
   const rounds: FixtureRound[] | undefined = roundsQ.data;
-  const { round, index } = useRoundSelection(rounds, filters.fecha);
+  // Por defecto: primera fecha no jugada (no toda FINALIZADO); si están todas jugadas, la última.
+  const firstUnplayed = (rounds ?? []).find((r) =>
+    r.matches.length === 0 ||
+    r.matches.some((m) => m.categories.some((c) => (c.status as string) !== 'FINALIZADO')),
+  );
+  const { round, index } = useRoundSelection(rounds, filters.fecha || firstUnplayed?.id || '');
   const withData = tournaments.filter((t) => t.slug !== activeSlug && (t._count?.matchdays ?? 0) > 0);
 
   const goRound = (dir: 1 | -1) => {

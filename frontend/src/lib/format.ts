@@ -8,5 +8,6 @@ export function formatKickoff(iso: string | null): string {
     month: 'short',
     hour: '2-digit',
     minute: '2-digit',
+    hourCycle: 'h23',
   }).format(d);
 }
