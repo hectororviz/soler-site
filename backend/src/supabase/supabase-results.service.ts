@@ -61,7 +61,7 @@ const isSolerClub = (c: any) =>
   c && [c.slug, c.shortName, c.name].some((v: string) => v?.toLowerCase().includes('soler'));
 
 interface SrcLeague { id: string; name: string }
-interface SrcCategory { id: string; name: string; sort_order: number }
+interface SrcCategory { id: string; name: string; sort_order: number; is_competitive: boolean | null }
 interface SrcTeam { id: string; name: string; short_name: string | null; logo_url: string | null }
 interface SrcMatch {
   id: string; category_id: string; local_team_id: string | null; away_team_id: string | null;
@@ -82,7 +82,7 @@ export class SupabaseResultsService {
     const scopes: {
       tournament: (typeof tournaments)[number];
       league: SrcLeague;
-      categories: Map<string, { name: string; slug: string }>;
+      categories: Map<string, { name: string; slug: string; competitive: boolean }>;
       teams: Map<string, any>;
     }[] = [];
 
@@ -91,15 +91,15 @@ export class SupabaseResultsService {
         const league = leagues.find((l) => l.name === leagueName);
         if (!league) continue;
         const [srcCats, srcTeams] = await Promise.all([
-          fetchAll<SrcCategory>('categories', `league_id=eq.${league.id}&select=id,name,sort_order&order=sort_order`),
+          fetchAll<SrcCategory>('categories', `league_id=eq.${league.id}&select=id,name,sort_order,is_competitive&order=sort_order`),
           fetchAll<SrcTeam>('teams', 'select=id,name,short_name,logo_url'),
         ]);
-        const categories = new Map<string, { name: string; slug: string }>();
+        const categories = new Map<string, { name: string; slug: string; competitive: boolean }>();
         for (const c of srcCats) {
           const ours = CATEGORY_OVERRIDE[c.name] ?? c.name;
           const slug = t.categories.find((k) => k.slug === slugify(ours))?.slug
             ?? t.categories.find((k) => k.slug === slugify(c.name))?.slug;
-          if (slug) categories.set(c.id, { name: t.categories.find((k) => k.slug === slug)!.name, slug });
+          if (slug) categories.set(c.id, { name: t.categories.find((k) => k.slug === slug)!.name, slug, competitive: c.is_competitive !== false });
         }
         const teams = new Map<string, any>();
         for (const tm of srcTeams) {
@@ -138,6 +138,7 @@ export class SupabaseResultsService {
           tournamentName: s.tournament.name,
           categoryName: cat.name,
           categorySlug: cat.slug,
+          competitive: cat.competitive,
           roundLabel: m.matchday ? `Fecha ${m.matchday}` : 'Fecha',
           home, away,
           homeScore: m.local_goals, awayScore: m.away_goals,
@@ -210,7 +211,11 @@ export class SupabaseResultsService {
     if (!query.tournament) throw new ServiceUnavailableException('Indicá el torneo.');
     if (!query.category) throw new ServiceUnavailableException('Indicá la categoría.');
     const rows = await this.matches(query.tournament);
-    const wanted = query.category === 'general' ? rows : rows.filter((r) => r.categorySlug === query.category);
+    // La tabla general del sitio oficial solo suma categorías competitivas
+    // (categories.is_competitive = true). Ej: 2020 es false en Domingos y Sábados.
+    const wanted = query.category === 'general'
+      ? rows.filter((r) => r.competitive !== false)
+      : rows.filter((r) => r.categorySlug === query.category);
     if (!wanted.length) return [];
     const table = new Map<string, any>();
     const row = (club: any) => {

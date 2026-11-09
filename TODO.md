@@ -78,3 +78,5 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 - Fixture default = torneo con fechas publicadas; filtros siempre en URL.
 - CORS local incluye `localhost` y `127.0.0.1` (puertos 5173/8080); en prod solo `https://csdsoler.com.ar`.
 - Resultados/posiciones: 503 honesto hasta Etapa 3, nunca datos inventados.
+- `GET /standings?categoria=general` replica al sitio oficial: suma solo categorías con
+  `is_competitive=true` en Supabase (`2020` excluida en Domingos/Sábados; Femenino todas competitivas).

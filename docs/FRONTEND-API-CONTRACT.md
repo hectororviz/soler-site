@@ -29,7 +29,9 @@ Nunca llama a Supabase de Ligas Deportivas ni expone credenciales.
 
 - `/fixture` → `GET /api/v1/fixtures?torneo=&categoria=&fecha=` + `GET /api/v1/tournaments`, `/categories`, `/matchdays`
 - `/resultados` → `GET /api/v1/results?...` (fuente: Ligas Deportivas normalizada por backend)
-- `/posiciones` → `GET /api/v1/standings?torneo=&categoria=` (orden oficial intacto)
+- `/posiciones` → `GET /api/v1/standings?torneo=&categoria=` (orden oficial intacto;
+  `categoria=general` suma solo `categories.is_competitive=true`, igual que el sitio oficial —
+  ej. `2020` es no competitiva en Domingos/Sábados y se excluye de la general pero sigue visible por categoría)
 - `/soler-tv` → `GET /api/v1/broadcasts?scope=active|upcoming`
 - `/admin/*` → `POST /api/v1/admin/auth/login` + CRUD (Etapa 1-2 backend NestJS/Prisma)
 
