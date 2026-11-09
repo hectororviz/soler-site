@@ -299,24 +299,23 @@ export class FixturesService {
     for (const d of days) {
       for (const m of this.shape(d, [], true).matches) {
         if (!isSolerClub(m.home) && !isSolerClub(m.away)) continue;
-        for (const c of m.categories) {
-          if (['PROGRAMADO', 'PROXIMO'].includes(c.status) && c.kickoff) {
-            out.push({
-              id: `${m.id}:${c.id}`,
-              tournamentName: (d as any).tournament?.name ?? d.label,
-              categoryName: c.categoryName,
-              roundLabel: d.label,
-              home: m.home,
-              away: m.away,
-              homeScore: null,
-              awayScore: null,
-              kickoff: c.kickoff,
-              venue: c.venue,
-              status: c.status === 'PROXIMO' ? 'PROXIMO' : 'PROGRAMADO',
-              hasBroadcast: !!c.broadcastId,
-            });
-          }
-        }
+        const cats = m.categories.filter(
+          (c: any) => ['PROGRAMADO', 'PROXIMO'].includes(c.status) && c.kickoff,
+        );
+        if (!cats.length) continue;
+        const kickoffs = cats.map((c: any) => c.kickoff).sort();
+        out.push({
+          id: m.id,
+          tournamentName: (d as any).tournament?.name ?? d.label,
+          roundLabel: d.label,
+          home: m.home,
+          away: m.away,
+          kickoff: kickoffs[0],
+          venue: cats.find((c: any) => c.venue)?.venue ?? null,
+          categoryCount: cats.length,
+          status: cats.some((c: any) => c.status === 'PROXIMO') ? 'PROXIMO' : 'PROGRAMADO',
+          hasBroadcast: cats.some((c: any) => c.broadcastId),
+        });
       }
     }
     out.sort((a, b) => new Date(a.kickoff).getTime() - new Date(b.kickoff).getTime());

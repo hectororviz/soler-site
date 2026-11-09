@@ -1,3 +1,5 @@
+import { useRef } from 'react';
+import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, CalendarDays, MapPin, Trophy } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
@@ -5,8 +7,80 @@ import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../co
 import { Container } from '../../components/layout/Container';
 import { MatchCard } from '../../components/sports/MatchCard';
 import { BroadcastCard } from '../../components/sports/BroadcastCard';
+import { ClubBadge } from '../../components/sports/badges';
+import { formatKickoff } from '../../lib/format';
+import { cn } from '../../lib/utils';
+import type { UpcomingClash } from '../../types';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
 import { usePageTitle } from '../../lib/usePageTitle';
+
+/** Fila con scroll horizontal arrastrable (mouse/táctil), sin barra visible. */
+function DragRow({ children }: { children: ReactNode }) {
+  const ref = useRef<HTMLDivElement>(null);
+  const drag = useRef({ down: false, startX: 0, startScroll: 0, moved: false });
+  return (
+    <div
+      ref={ref}
+      className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      onPointerDown={(e) => {
+        const el = ref.current;
+        if (!el) return;
+        drag.current = { down: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
+        el.setPointerCapture(e.pointerId);
+      }}
+      onPointerMove={(e) => {
+        const el = ref.current;
+        const d = drag.current;
+        if (!d.down || !el) return;
+        const dx = e.clientX - d.startX;
+        if (Math.abs(dx) > 6) d.moved = true;
+        el.scrollLeft = d.startScroll - dx;
+      }}
+      onPointerUp={() => { drag.current.down = false; }}
+      onPointerCancel={() => { drag.current.down = false; }}
+      onClickCapture={(e) => {
+        if (drag.current.moved) {
+          e.preventDefault();
+          e.stopPropagation();
+          drag.current.moved = false;
+        }
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {
+  return (
+    <article className="w-72 shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-soft sm:w-80">
+      <div className="flex items-center justify-between gap-2 text-[13px] text-ink-muted">
+        <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex items-center rounded-full bg-pitch px-2 py-0.5 font-bold text-white">{clash.tournamentName}</span>
+        </span>
+        <span className="font-semibold">{clash.roundLabel}</span>
+      </div>
+      <div className="mt-3 flex flex-col gap-2">
+        <ClubBadge club={clash.home} strong />
+        <ClubBadge club={clash.away} strong />
+      </div>
+      <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-muted">
+        <CalendarDays size={15} aria-hidden className="shrink-0" />
+        {formatKickoff(clash.kickoff)}
+        {clash.venue ? ` · ${clash.venue}` : ''}
+      </p>
+      <p className={cn('mt-1 text-[13px] text-ink-muted')}>
+        {clash.categoryCount} {clash.categoryCount === 1 ? 'categoría' : 'categorías'}
+      </p>
+      <Link
+        to={`/fixture?partido=${clash.id}`}
+        className="mt-3 inline-flex text-sm font-semibold text-primary hover:underline"
+      >
+        Ver fixture <ArrowRight size={15} className="ml-1 self-center" />
+      </Link>
+    </article>
+  );
+}
 
 const STREAMING_URL = import.meta.env.VITE_STREAMING_URL ?? 'https://streaming.csdsoler.com.ar';
 
@@ -107,9 +181,9 @@ export function HomePage() {
           <div className="grid gap-4 md:grid-cols-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-44" />)}</div>
         )}
         {upcoming.status === 'ready' && (
-          <div className="grid gap-4 md:grid-cols-3">
-            {upcoming.data.map((m) => <MatchCard key={m.id} match={m} />)}
-          </div>
+          <DragRow>
+            {upcoming.data.map((m) => <UpcomingClashCard key={m.id} clash={m} />)}
+          </DragRow>
         )}
         {upcoming.status === 'empty' && (
           <EmptyState title="No hay partidos programados" hint="Cuando se publique una fecha del fixture, aparecerá acá." action={<Link to="/fixture"><Button variant="secondary">Ver fixture</Button></Link>} />

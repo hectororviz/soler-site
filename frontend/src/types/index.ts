@@ -74,6 +74,20 @@ export interface MatchSummary {
   hasBroadcast: boolean;
 }
 
+/** Próximo cruce de Soler (agrupado: un card por enfrentamiento, no por categoría). */
+export interface UpcomingClash {
+  id: string;
+  tournamentName: string;
+  roundLabel: string;
+  home: Club;
+  away: Club;
+  kickoff: string | null;
+  venue: string | null;
+  categoryCount: number;
+  status: MatchStatus;
+  hasBroadcast: boolean;
+}
+
 export interface StandingRow {
   position: number;
   club: Club;

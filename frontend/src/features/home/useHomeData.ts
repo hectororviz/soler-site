@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../services/api';
 import { USE_MOCKS, mockLive, mockResults, mockUpcoming } from '../../services/mock';
-import type { Broadcast, MatchSummary } from '../../types';
+import type { Broadcast, MatchSummary, UpcomingClash } from '../../types';
 import { ApiError } from '../../types';
 
 export type DataState<T> =
@@ -40,7 +40,7 @@ async function fetchOrMock<T>(path: string, mock: T): Promise<T> {
 export function useUpcoming() {
   const q = useQuery({
     queryKey: ['upcoming'],
-    queryFn: () => fetchOrMock<MatchSummary[]>('/fixtures/upcoming?limit=6', mockUpcoming),
+    queryFn: () => fetchOrMock<UpcomingClash[]>('/fixtures/upcoming?limit=6', mockUpcoming as unknown as UpcomingClash[]),
     retry: 1,
   });
   return toState(q);
