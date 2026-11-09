@@ -1,11 +1,10 @@
 import { useRef } from 'react';
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, CalendarDays, MapPin, Trophy } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CalendarDays, MapPin, Trophy } from 'lucide-react';
 import { Button } from '../../components/ui/Button';
 import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
 import { Container } from '../../components/layout/Container';
-import { MatchCard } from '../../components/sports/MatchCard';
 import { BroadcastCard } from '../../components/sports/BroadcastCard';
 import { ClubBadge } from '../../components/sports/badges';
 import { formatKickoff } from '../../lib/format';
@@ -14,39 +13,66 @@ import type { UpcomingClash } from '../../types';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
 import { usePageTitle } from '../../lib/usePageTitle';
 
-/** Fila con scroll horizontal arrastrable (mouse/táctil), sin barra visible. */
-function DragRow({ children }: { children: ReactNode }) {
+/** Fila con scroll horizontal arrastrable (mouse/táctil), sin barra visible + flechas. */
+function DragRow({ children, title }: { children: ReactNode; title?: ReactNode }) {
   const ref = useRef<HTMLDivElement>(null);
   const drag = useRef({ down: false, startX: 0, startScroll: 0, moved: false });
+  const nudge = (dir: 1 | -1) => {
+    const el = ref.current;
+    if (el) el.scrollBy({ left: dir * 340, behavior: 'smooth' });
+  };
   return (
-    <div
-      ref={ref}
-      className="flex snap-x gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      onPointerDown={(e) => {
-        const el = ref.current;
-        if (!el) return;
-        drag.current = { down: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
-        el.setPointerCapture(e.pointerId);
-      }}
-      onPointerMove={(e) => {
-        const el = ref.current;
-        const d = drag.current;
-        if (!d.down || !el) return;
-        const dx = e.clientX - d.startX;
-        if (Math.abs(dx) > 6) d.moved = true;
-        el.scrollLeft = d.startScroll - dx;
-      }}
-      onPointerUp={() => { drag.current.down = false; }}
-      onPointerCancel={() => { drag.current.down = false; }}
-      onClickCapture={(e) => {
-        if (drag.current.moved) {
-          e.preventDefault();
-          e.stopPropagation();
-          drag.current.moved = false;
-        }
-      }}
-    >
-      {children}
+    <div>
+      {(title) && (
+        <div className="mb-2 flex items-center justify-between gap-2">
+          <p className="text-sm font-bold uppercase text-ink-muted">{title}</p>
+          <span className="inline-flex gap-1">
+            <button
+              aria-label="Desplazar a la izquierda"
+              onClick={() => nudge(-1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
+            >
+              <ArrowLeft size={15} />
+            </button>
+            <button
+              aria-label="Desplazar a la derecha"
+              onClick={() => nudge(1)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
+            >
+              <ArrowRight size={15} />
+            </button>
+          </span>
+        </div>
+      )}
+      <div
+        ref={ref}
+        className="flex snap-x cursor-grab gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [touch-action:pan-y] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        onPointerDown={(e) => {
+          const el = ref.current;
+          if (!el || (e.target as HTMLElement).closest('button,a')) return;
+          drag.current = { down: true, startX: e.clientX, startScroll: el.scrollLeft, moved: false };
+          el.setPointerCapture(e.pointerId);
+        }}
+        onPointerMove={(e) => {
+          const el = ref.current;
+          const d = drag.current;
+          if (!d.down || !el) return;
+          const dx = e.clientX - d.startX;
+          if (Math.abs(dx) > 6) d.moved = true;
+          el.scrollLeft = d.startScroll - dx;
+        }}
+        onPointerUp={() => { drag.current.down = false; }}
+        onPointerCancel={() => { drag.current.down = false; }}
+        onClickCapture={(e) => {
+          if (drag.current.moved) {
+            e.preventDefault();
+            e.stopPropagation();
+            drag.current.moved = false;
+          }
+        }}
+      >
+        {children}
+      </div>
     </div>
   );
 }
@@ -67,16 +93,53 @@ function ResultRow({ slug, label }: { slug: string; label: string }) {
     .slice(0, 6);
   if (!soler.length) return null;
   return (
-    <div className="mt-6">
-      <p className="mb-2 text-sm font-bold uppercase text-ink-muted">{label}</p>
-      <DragRow>
+    <div className="mt-6 select-none">
+      <DragRow title={label}>
         {soler.map((m) => (
-          <div key={m.id} className="w-80 shrink-0 snap-start sm:w-96">
-            <MatchCard match={m} />
-          </div>
+          <HomeResultCard key={m.id} match={m} />
         ))}
       </DragRow>
     </div>
+  );
+}
+
+function HomeResultCard({ match }: { match: { id: string; tournamentName: string; categoryName: string; roundLabel: string; home: { shortName: string; name: string }; away: { shortName: string; name: string }; homeScore: number | null; awayScore: number | null; kickoff: string | null; venue: string | null } }) {
+  return (
+    <article className="w-80 shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-soft sm:w-96">
+      <div className="flex items-center justify-between gap-2 text-[13px]">
+        <span className="inline-flex items-center rounded-full bg-pitch px-2 py-0.5 font-bold text-white">{match.tournamentName}</span>
+        <span className="font-semibold text-ink-muted">{match.roundLabel}</span>
+      </div>
+      <p className="mt-2 font-display text-lg font-extrabold uppercase tracking-wide">{match.categoryName}</p>
+      <div className="mt-2 flex items-center justify-between gap-2">
+        <span className="flex min-w-0 flex-1 items-center gap-2">
+          <MiniCrest name={match.home.shortName} />
+          <span className="truncate text-sm font-bold">{match.home.shortName}</span>
+        </span>
+        <span className="shrink-0 font-display text-3xl font-extrabold tabular-nums">
+          {match.homeScore ?? '–'} <span className="text-ink-muted">–</span> {match.awayScore ?? '–'}
+        </span>
+        <span className="flex min-w-0 flex-1 items-center justify-end gap-2">
+          <span className="truncate text-right text-sm font-bold">{match.away.shortName}</span>
+          <MiniCrest name={match.away.shortName} />
+        </span>
+      </div>
+      <p className="mt-2 text-[13px] text-ink-muted">
+        {formatKickoff(match.kickoff)}
+        {match.venue ? ` · ${match.venue}` : ''}
+      </p>
+    </article>
+  );
+}
+
+function MiniCrest({ name }: { name: string }) {
+  return (
+    <span
+      aria-hidden
+      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-pitch font-display text-xs font-bold text-gold"
+    >
+      {name.slice(0, 2).toUpperCase()}
+    </span>
   );
 }
 

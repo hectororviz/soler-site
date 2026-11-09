@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
-import { ClubBadge, ScoreDisplay } from '../../components/sports/badges';
-import { formatKickoff } from '../../lib/format';
+import { ClubBadge } from '../../components/sports/badges';
 import { api } from '../../services/api';
 import type { FixtureClash, FixtureRound } from '../../types';
 import { useTournaments } from '../fixtures/useFixture';
@@ -29,13 +28,10 @@ function ResultClashCard({ clash }: { clash: FixtureClash }) {
       </div>
       <ul className="mt-3 divide-y divide-line border-t border-line">
         {clash.categories.map((c) => (
-          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
-            <span className="font-semibold">{c.categoryName}</span>
-            <span className="text-ink-muted">
-              {formatKickoff(c.kickoff)}
-              {c.venue ? ` · ${c.venue}` : ''}
-            </span>
-            <ScoreDisplay home={c.homeScore} away={c.awayScore} status="FINALIZADO" />
+          <li key={c.id} className="flex items-center justify-between gap-2 px-4 py-2.5">
+            <span className="w-16 shrink-0 text-center font-display text-2xl font-extrabold tabular-nums">{c.homeScore ?? '\u2013'}</span>
+            <span className="flex-1 text-center text-sm font-semibold">{c.categoryName}</span>
+            <span className="w-16 shrink-0 text-center font-display text-2xl font-extrabold tabular-nums">{c.awayScore ?? '\u2013'}</span>
           </li>
         ))}
       </ul>
