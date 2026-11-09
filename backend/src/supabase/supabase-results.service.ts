@@ -156,6 +156,56 @@ export class SupabaseResultsService {
     return rows.slice(0, query.limit ?? 50);
   }
 
+  /**
+   * Rondas espejo del fixture: agrupadas por fecha, con cruces y
+   * categorías con marcador. Para la página de resultados.
+   */
+  async resultRounds(tournamentSlug?: string) {
+    const rows = await this.matches(tournamentSlug);
+    const rounds = new Map<number, any[]>();
+    for (const r of rows) {
+      const n = /^Fecha\s+(\d+)/i.exec(r.roundLabel);
+      const key = n ? parseInt(n[1], 10) : 0;
+      if (!rounds.has(key)) rounds.set(key, []);
+      rounds.get(key)!.push(r);
+    }
+    return [...rounds.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([num, rs], idx) => {
+        const clashes = new Map<string, any>();
+        for (const r of rs) {
+          const k = `${r.home.id}|${r.away.id}`;
+          if (!clashes.has(k)) {
+            clashes.set(k, { id: `${num}-${k}`, home: r.home, away: r.away, categories: [] });
+          }
+          clashes.get(k)!.categories.push({
+            id: r.id,
+            categoryId: r.categorySlug,
+            categoryName: r.categoryName,
+            kickoff: r.kickoff,
+            venue: r.venue,
+            status: 'FINALIZADO',
+            homeScore: r.homeScore,
+            awayScore: r.awayScore,
+            broadcastId: null,
+          });
+        }
+        const matches = [...clashes.values()];
+        matches.sort(
+          (a, b) =>
+            Number(isSolerClub(b.home) || isSolerClub(b.away)) - Number(isSolerClub(a.home) || isSolerClub(a.away)),
+        );
+        return {
+          id: `ronda-${num || idx}`,
+          label: num ? `Fecha ${num}` : 'Fecha',
+          order: num || idx,
+          published: true,
+          tournamentName: rs[0]?.tournamentName ?? '',
+          matches,
+        };
+      });
+  }
+
   async standings(query: { tournament?: string; category?: string }) {
     if (!query.tournament) throw new ServiceUnavailableException('Indicá el torneo.');
     if (!query.category) throw new ServiceUnavailableException('Indicá la categoría.');

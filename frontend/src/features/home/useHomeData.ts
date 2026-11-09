@@ -46,10 +46,13 @@ export function useUpcoming() {
   return toState(q);
 }
 
-export function useResults() {
+export function useResults(torneo?: string) {
   const q = useQuery({
-    queryKey: ['results-recent'],
-    queryFn: () => fetchOrMock<MatchSummary[]>('/results?limit=6', mockResults),
+    queryKey: ['results-recent', torneo ?? 'all'],
+    queryFn: () => fetchOrMock<MatchSummary[]>(
+      torneo ? `/results?torneo=${encodeURIComponent(torneo)}&limit=20` : '/results?limit=6',
+      mockResults,
+    ),
     retry: 1,
   });
   return toState(q);

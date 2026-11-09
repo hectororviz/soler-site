@@ -51,8 +51,36 @@ function DragRow({ children }: { children: ReactNode }) {
   );
 }
 
-function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {
+function ResultRow({ slug, label }: { slug: string; label: string }) {
+  const r = useResults(slug);
+  if (r.status === 'loading') {
+    return (
+      <div className="mt-4">
+        <p className="mb-2 text-sm font-bold uppercase text-ink-muted">{label}</p>
+        <div className="flex gap-4 overflow-hidden"><Skeleton className="h-44 w-80 shrink-0" /></div>
+      </div>
+    );
+  }
+  if (r.status !== 'ready') return null;
+  const soler = r.data
+    .filter((m) => [m.home.shortName, m.home.name, m.away.shortName, m.away.name].some((v) => v?.toLowerCase().includes('soler')))
+    .slice(0, 6);
+  if (!soler.length) return null;
   return (
+    <div className="mt-6">
+      <p className="mb-2 text-sm font-bold uppercase text-ink-muted">{label}</p>
+      <DragRow>
+        {soler.map((m) => (
+          <div key={m.id} className="w-80 shrink-0 snap-start sm:w-96">
+            <MatchCard match={m} />
+          </div>
+        ))}
+      </DragRow>
+    </div>
+  );
+}
+
+function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {  return (
     <article className="w-72 shrink-0 snap-start rounded-card border border-line bg-white p-4 shadow-soft sm:w-80">
       <div className="flex items-center justify-between gap-2 text-[13px] text-ink-muted">
         <span className="inline-flex items-center gap-1.5">
@@ -112,7 +140,6 @@ function usePageMeta() {
 export function HomePage() {
   usePageMeta();
   const upcoming = useUpcoming();
-  const results = useResults();
   const live = useLiveBroadcast();
 
   return (
@@ -194,28 +221,16 @@ export function HomePage() {
         {upcoming.status === 'error' && <ErrorState hint={upcoming.message} onRetry={upcoming.retry} />}
       </Container>
 
-      {/* 4. Últimos resultados */}
+      {/* 4. Últimos resultados (solo Soler, por torneo) */}
       <Container className="mt-12">
         <SectionHeading
           title="Últimos resultados"
           description="Marcadores confirmados desde Ligas Deportivas. Nunca mostramos resultados inventados."
           link={<Link to="/resultados" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline">Todos los resultados <ArrowRight size={15} /></Link>}
         />
-        {results.status === 'loading' && (
-          <div className="grid gap-4 md:grid-cols-2">{[0, 1].map((i) => <Skeleton key={i} className="h-44" />)}</div>
-        )}
-        {results.status === 'ready' && (
-          <div className="grid gap-4 md:grid-cols-2">
-            {results.data.map((m) => <MatchCard key={m.id} match={m} />)}
-          </div>
-        )}
-        {results.status === 'empty' && (
-          <EmptyState title="Todavía no hay resultados" hint="Los resultados oficiales aparecerán cuando estén disponibles en Ligas Deportivas." />
-        )}
-        {results.status === 'unavailable' && (
-          <EmptyState title="Resultados no disponibles" hint="No se pudo conectar con Ligas Deportivas. El resto del sitio sigue funcionando." />
-        )}
-        {results.status === 'error' && <ErrorState hint={results.message} onRetry={results.retry} />}
+        <ResultRow slug="futbol-femenino" label="Fútbol Femenino" />
+        <ResultRow slug="juveniles-sabados" label="Juveniles Sábados" />
+        <ResultRow slug="juveniles-domingos" label="Juveniles Domingos" />
       </Container>
 
       {/* 5. Competiciones */}

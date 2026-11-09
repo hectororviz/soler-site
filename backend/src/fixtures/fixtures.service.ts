@@ -330,6 +330,9 @@ export class FixturesService {
   results(query: { tournament?: string; category?: string; limit?: number } = {}) {
     return this.ligas.results(query);
   }
+  resultRounds(query: { tournament?: string } = {}) {
+    return this.ligas.resultRounds(query.tournament);
+  }
   standings(query: { tournament?: string; category?: string } = {}) {
     return this.ligas.standings(query);
   }

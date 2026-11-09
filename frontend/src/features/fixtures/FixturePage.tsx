@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronDown, Link2, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Link2, Check } from 'lucide-react';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
@@ -41,10 +41,8 @@ function ShareButton() {
 }
 
 function ClashCard({ clash }: { clash: FixtureClash }) {
-  const solerHere = [clash.home.shortName, clash.home.name, clash.away.shortName, clash.away.name].some((v) => v?.toLowerCase().includes('soler'));
-  const [open, setOpen] = useState(solerHere);
-  const isSoler = (c: { shortName: string; name: string; slug?: string }) =>
-    [c.slug, c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
+  const isSoler = (c: { shortName: string; name: string }) =>
+    [c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
   const homeSoler = isSoler(clash.home);
   const awaySoler = isSoler(clash.away);
   const firstKickoff = clash.categories.find((c) => c.kickoff)?.kickoff ?? null;
@@ -52,15 +50,11 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
   return (
     <article
       className={cn(
-        'rounded-card border bg-white shadow-soft',
+        'rounded-card border bg-white px-4 py-3 shadow-soft',
         clash.isSoler ? 'border border-l-4 border-line border-l-primary' : 'border-line',
       )}
     >
-      <button
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left"
-      >
+      <div className="flex w-full items-center justify-between gap-3">
         <span className="flex flex-1 items-center justify-between gap-2">
           <ClubBadge club={clash.home} strong={homeSoler} />
           <span className="font-display text-lg font-bold text-ink-muted">VS</span>
@@ -69,21 +63,7 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
         <span className="hidden shrink-0 text-[13px] text-ink-muted sm:block">
           {formatKickoff(firstKickoff)}{venue ? ` · ${venue}` : ''}
         </span>
-        <ChevronDown size={18} className={cn('shrink-0 transition-transform', open && 'rotate-180')} aria-hidden />
-      </button>
-      {open && (
-        <ul className="divide-y divide-line border-t border-line">
-          {clash.categories.map((c) => (
-            <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 px-4 py-2.5 text-sm">
-              <span className="font-semibold">{c.categoryName}</span>
-              <span className="text-ink-muted">
-                {formatKickoff(c.kickoff)}
-                {c.venue ? ` · ${c.venue}` : ''}
-              </span>
-            </li>
-          ))}
-        </ul>
-      )}
+      </div>
     </article>
   );
 }

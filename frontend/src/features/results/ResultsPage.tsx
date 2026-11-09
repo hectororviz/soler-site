@@ -1,39 +1,72 @@
 import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, ArrowRight } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
-import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
-import { MatchCard } from '../../components/sports/MatchCard';
+import { EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
+import { ClubBadge, ScoreDisplay } from '../../components/sports/badges';
+import { formatKickoff } from '../../lib/format';
 import { api } from '../../services/api';
-import type { MatchSummary } from '../../types';
-import { useCategories, useTournaments } from '../fixtures/useFixture';
+import type { FixtureClash, FixtureRound } from '../../types';
+import { useTournaments } from '../fixtures/useFixture';
 import { usePageTitle } from '../../lib/usePageTitle';
+
+const isSoler = (c: { shortName: string; name: string }) =>
+  [c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
+
+function ResultClashCard({ clash }: { clash: FixtureClash }) {
+  const homeSoler = isSoler(clash.home);
+  const awaySoler = isSoler(clash.away);
+  return (
+    <article className="rounded-card border border-line bg-white p-4 shadow-soft">
+      <div className="flex items-center justify-between gap-3">
+        <span className="flex flex-1 items-center justify-between gap-2">
+          <ClubBadge club={clash.home} strong={homeSoler} />
+          <span className="font-display text-lg font-bold text-ink-muted">VS</span>
+          <ClubBadge club={clash.away} strong={awaySoler} />
+        </span>
+      </div>
+      <ul className="mt-3 divide-y divide-line border-t border-line">
+        {clash.categories.map((c) => (
+          <li key={c.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5 text-sm">
+            <span className="font-semibold">{c.categoryName}</span>
+            <span className="text-ink-muted">
+              {formatKickoff(c.kickoff)}
+              {c.venue ? ` · ${c.venue}` : ''}
+            </span>
+            <ScoreDisplay home={c.homeScore} away={c.awayScore} status="FINALIZADO" />
+          </li>
+        ))}
+      </ul>
+    </article>
+  );
+}
 
 export function ResultadosPage() {
   usePageTitle('Resultados — CSD Soler');
-  const [torneo, setTorneo] = useState('');
-  const [categoria, setCategoria] = useState('');
   const tournamentsQ = useTournaments();
   const tournaments = tournamentsQ.data ?? [];
+  const [torneo, setTorneo] = useState('');
   const activeSlug = torneo || tournaments[0]?.slug || '';
-  const activeTournament = tournaments.find((t) => t.slug === activeSlug);
-  const categoriesQ = useCategories(activeTournament?.id ?? '');
 
-  const q = useQuery({
-    queryKey: ['results', activeSlug, categoria],
-    queryFn: () => {
-      const p = new URLSearchParams();
-      if (activeSlug) p.set('torneo', activeSlug);
-      if (categoria) p.set('categoria', categoria);
-      p.set('limit', '50');
-      return api.get<MatchSummary[]>(`/results?${p.toString()}`);
-    },
+  const roundsQ = useQuery({
+    queryKey: ['result-rounds', activeSlug],
+    queryFn: () => api.get<FixtureRound[]>(`/results/rounds?torneo=${encodeURIComponent(activeSlug)}`),
     enabled: !!activeSlug,
     retry: 1,
   });
-  const rows = q.data ?? [];
+  const rounds = roundsQ.data ?? [];
+  const [fecha, setFecha] = useState('');
+  const effectiveId = fecha || rounds[rounds.length - 1]?.id || '';
+  const index = Math.max(0, rounds.findIndex((r) => r.id === effectiveId));
+  const round = rounds[index];
+
+  const goRound = (dir: 1 | -1) => {
+    if (!rounds.length) return;
+    const next = rounds[Math.min(rounds.length - 1, Math.max(0, index + dir))];
+    if (next) setFecha(next.id);
+  };
 
   return (
     <Container className="py-10">
@@ -41,46 +74,53 @@ export function ResultadosPage() {
         title="Resultados"
         description="Marcadores oficiales cargados en Ligas Deportivas. Nunca mostramos resultados inventados."
       />
-      <Card className="flex flex-wrap gap-3 p-4">
-        <label className="flex min-w-44 flex-1 flex-col gap-1 text-sm font-semibold">
-          Torneo
-          <select
-            value={activeSlug}
-            onChange={(e) => { setTorneo(e.target.value); setCategoria(''); }}
-            className="h-11 rounded-card border border-line bg-white px-3 font-normal"
+      <div className="flex flex-wrap gap-2">
+        {tournaments.map((t) => (
+          <button
+            key={t.id}
+            onClick={() => { setTorneo(t.slug); setFecha(''); }}
+            className={`rounded-card border px-4 py-2.5 text-sm font-bold ${t.slug === activeSlug ? 'border-primary bg-primary-soft text-primary' : 'border-line bg-white'}`}
           >
-            {tournaments.map((t) => (
-              <option key={t.id} value={t.slug}>{t.name}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-44 flex-1 flex-col gap-1 text-sm font-semibold">
-          Categoría
-          <select
-            value={categoria}
-            onChange={(e) => setCategoria(e.target.value)}
-            className="h-11 rounded-card border border-line bg-white px-3 font-normal"
-          >
-            <option value="">Todas</option>
-            {(categoriesQ.data ?? []).map((c) => (
-              <option key={c.id} value={c.slug}>{c.name}</option>
-            ))}
-          </select>
-        </label>
-      </Card>
+            {t.name}
+          </button>
+        ))}
+      </div>
 
-      {q.isPending || tournamentsQ.isPending ? (
-        <div className="mt-6 space-y-3">{[0, 1].map((i) => <Skeleton key={i} className="h-44" />)}</div>
-      ) : q.isError ? (
-        <div className="mt-6"><ErrorState onRetry={() => q.refetch()} /></div>
-      ) : !rows.length ? (
+      {roundsQ.isPending || tournamentsQ.isPending ? (
+        <div className="mt-6 space-y-3">{[0, 1].map((i) => <Skeleton key={i} className="h-24" />)}</div>
+      ) : roundsQ.isError ? (
+        <div className="mt-6"><ErrorState onRetry={() => roundsQ.refetch()} /></div>
+      ) : !rounds.length ? (
         <div className="mt-6">
-          <EmptyState title="Sin resultados" hint="Todavía no hay partidos finalizados con este filtro." action={<Link to="/fixture"><Button variant="secondary">Ver fixture</Button></Link>} />
+          <EmptyState title="Sin resultados" hint="Todavía no hay partidos finalizados en este torneo." action={<Link to="/fixture"><Button variant="secondary">Ver fixture</Button></Link>} />
         </div>
       ) : (
-        <div className="mt-6 grid gap-4 md:grid-cols-2">
-          {rows.map((m) => <MatchCard key={m.id} match={m} />)}
-        </div>
+        <>
+          <div className="mt-6 flex items-center justify-between gap-2">
+            <Button variant="secondary" size="sm" onClick={() => goRound(-1)} disabled={index <= 0} aria-label="Fecha anterior">
+              <ArrowLeft size={16} /> Anterior
+            </Button>
+            <div className="flex items-center gap-2">
+              <span className="font-display text-2xl font-extrabold uppercase" aria-live="polite">{round?.label}</span>
+              <select
+                value={round?.id ?? ''}
+                onChange={(e) => setFecha(e.target.value)}
+                aria-label="Saltar a otra fecha"
+                className="h-11 rounded-card border border-line bg-white px-3 text-sm font-semibold"
+              >
+                {rounds.map((r) => (
+                  <option key={r.id} value={r.id}>{r.label}</option>
+                ))}
+              </select>
+            </div>
+            <Button variant="secondary" size="sm" onClick={() => goRound(1)} disabled={index >= rounds.length - 1} aria-label="Fecha siguiente">
+              Siguiente <ArrowRight size={16} />
+            </Button>
+          </div>
+          <div className="mt-4 grid gap-3">
+            {round?.matches.map((m) => <ResultClashCard key={m.id} clash={m} />)}
+          </div>
+        </>
       )}
       <p className="mt-6 text-center">
         <Link to="/" className="inline-flex items-center gap-1 text-sm font-bold text-primary hover:underline"><ArrowLeft size={15} /> Volver al inicio</Link>

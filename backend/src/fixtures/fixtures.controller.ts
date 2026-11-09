@@ -24,6 +24,11 @@ export class FixturesController {
     return this.fixtures.results({ tournament: torneo, category: categoria, limit: Math.min(limit, 100) });
   }
 
+  @Get('results/rounds')
+  resultRounds(@Query('torneo') torneo?: string) {
+    return this.fixtures.resultRounds({ tournament: torneo });
+  }
+
   @Get('standings')
   standings(@Query('torneo') torneo?: string, @Query('categoria') categoria?: string) {
     return this.fixtures.standings({ tournament: torneo, category: categoria });
