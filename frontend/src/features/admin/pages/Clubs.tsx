@@ -5,8 +5,12 @@ import { useAdminList, useAdminWrite } from '../hooks';
 import type { AdminClub } from '../types';
 import { usePageTitle } from '../../../lib/usePageTitle';
 
-function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, mapsUrl: string | null) => void }) {
+function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, data: Partial<AdminClub>) => void }) {
   const [mapsUrl, setMapsUrl] = useState(club.mapsUrl ?? '');
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(club.name);
+  const [shortName, setShortName] = useState(club.shortName);
+  const [externalId, setExternalId] = useState(club.externalId ?? '');
   const src = resolveCrest(club.crestPath);
   return (
     <li className="flex flex-col gap-2 rounded-card border border-line px-3 py-2">
@@ -18,12 +22,29 @@ function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, mapsU
             {club.shortName.slice(0, 2).toUpperCase()}
           </span>
         )}
-        <span className="min-w-0 flex-1">
-          <span className="block truncate font-semibold">{club.name}</span>
-          <span className="block truncate text-[13px] text-ink-muted">
-            {club.shortName} · /{club.slug}{club.externalId ? ` · ext:${club.externalId}` : ''}
+        {editing ? (
+          <span className="grid min-w-0 flex-1 gap-2 sm:grid-cols-3">
+            <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />
+            <input className={inputCls} value={shortName} onChange={(e) => setShortName(e.target.value)} placeholder="Nombre corto" />
+            <input className={inputCls} value={externalId} onChange={(e) => setExternalId(e.target.value)} placeholder="ID externo" />
           </span>
-        </span>
+        ) : (
+          <span className="min-w-0 flex-1">
+            <span className="block truncate font-semibold">{club.name}</span>
+            <span className="block truncate text-[13px] text-ink-muted">
+              {club.shortName} · /{club.slug}{club.externalId ? ` · ext:${club.externalId}` : ''}
+            </span>
+          </span>
+        )}
+        <button
+          onClick={() => {
+            if (editing) onSave(club.id, { name: name.trim() || club.name, shortName: shortName.trim() || club.shortName, externalId: externalId.trim() || null });
+            setEditing((v) => !v);
+          }}
+          className="inline-flex h-11 shrink-0 items-center rounded-card border border-line px-3 text-sm font-semibold hover:border-primary"
+        >
+          {editing ? 'Guardar' : 'Editar'}
+        </button>
       </span>
       <span className="flex items-center gap-2">
         <input
@@ -33,7 +54,7 @@ function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, mapsU
           placeholder="Link de Google Maps de la cancha"
         />
         <button
-          onClick={() => onSave(club.id, mapsUrl.trim() || null)}
+          onClick={() => onSave(club.id, { mapsUrl: mapsUrl.trim() || null })}
           className="inline-flex h-11 shrink-0 items-center rounded-card border border-line px-3 text-sm font-semibold hover:border-primary"
         >
           Guardar Maps
@@ -113,7 +134,7 @@ export function ClubsPage() {
           ) : (
             <ul className="grid gap-2 md:grid-cols-2">
               {list.data!.map((c) => (
-                <ClubRow key={c.id} club={c} onSave={(id, url) => w.run(() => api.patch(`/admin/clubs/${id}`, { mapsUrl: url }, { admin: true }), ['admin-clubs'])} />
+                <ClubRow key={c.id} club={c} onSave={(id, data) => w.run(() => api.patch(`/admin/clubs/${id}`, data, { admin: true }), ['admin-clubs'])} />
               ))}
             </ul>
           )}

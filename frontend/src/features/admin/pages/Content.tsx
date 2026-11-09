@@ -5,7 +5,7 @@ import { useAdminList, useAdminWrite } from '../hooks';
 import type { PageSlot, Sponsor } from '../types';
 import { usePageTitle } from '../../../lib/usePageTitle';
 
-const SLOTS = ['club', 'contacto', 'hero'];
+const SLOTS = ['club', 'contacto', 'hero', 'competiciones', 'torneo-detalle'];
 
 function SlotEditor({ slot }: { slot: string }) {
   const q = useAdminList<PageSlot | null>('admin-slot', `/content?slot=${slot}`);
@@ -78,12 +78,16 @@ function SlotEditor({ slot }: { slot: string }) {
   );
 }
 
-function SponsorRow({ sponsor, onLogo, onToggle, onRemove }: {
+function SponsorRow({ sponsor, onLogo, onSave, onToggle, onRemove }: {
   sponsor: Sponsor;
   onLogo: (id: string, logoPath: string) => void;
+  onSave: (id: string, data: { name?: string; href?: string | null }) => void;
   onToggle: () => void;
   onRemove: () => void;
 }) {
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(sponsor.name);
+  const [href, setHref] = useState(sponsor.href ?? '');
   const [uploading, setUploading] = useState(false);
   const pick = async (f: File | null) => {
     if (!f) return;
@@ -100,9 +104,24 @@ function SponsorRow({ sponsor, onLogo, onToggle, onRemove }: {
     <li className="flex flex-wrap items-center justify-between gap-2 py-2.5">
       <span className="flex min-w-0 items-center gap-2">
         {logo ? <img src={logo} alt={sponsor.name} className="h-8 object-contain" /> : null}
-        <span className="font-semibold">{sponsor.name} <span className="text-sm font-normal text-ink-muted">{sponsor.active ? '· visible' : '· oculto'}</span></span>
+        {editing ? (
+          <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
+            <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />
+            <input className={inputCls} value={href} onChange={(e) => setHref(e.target.value)} placeholder="https://…" />
+            <button
+              onClick={() => { onSave(sponsor.id, { name: name.trim() || sponsor.name, href: href.trim() || null }); setEditing(false); }}
+              className="inline-flex h-9 items-center rounded-card bg-pitch px-3 text-sm font-bold text-white"
+            >
+              Guardar
+            </button>
+            <button onClick={() => setEditing(false)} className="inline-flex h-9 items-center rounded-card border border-line px-3 text-sm">Cancelar</button>
+          </span>
+        ) : (
+          <span className="font-semibold">{sponsor.name} <span className="text-sm font-normal text-ink-muted">{sponsor.active ? '· visible' : '· oculto'}</span></span>
+        )}
       </span>
       <span className="flex flex-wrap items-center gap-2">
+        <button onClick={() => setEditing((v) => !v)} className="inline-flex h-9 items-center rounded-card border border-line px-3 text-sm font-semibold">Editar</button>
         <input
           type="file"
           accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -177,6 +196,7 @@ export function ContentPage() {
                   key={s.id}
                   sponsor={s}
                   onLogo={(id, logoPath) => w.run(() => api.patch(`/admin/sponsors/${id}`, { logoPath }, { admin: true }), ['admin-sponsors'])}
+                  onSave={(id, data) => w.run(() => api.patch(`/admin/sponsors/${id}`, data, { admin: true }), ['admin-sponsors'])}
                   onToggle={() => w.run(() => api.patch(`/admin/sponsors/${s.id}`, { active: !s.active }, { admin: true }), ['admin-sponsors'])}
                   onRemove={() => w.run(() => api.del(`/admin/sponsors/${s.id}`, { admin: true }), ['admin-sponsors'])}
                 />

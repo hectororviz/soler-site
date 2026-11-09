@@ -9,6 +9,28 @@ import type { Category } from '../../types';
 import { useTournaments } from '../fixtures/useFixture';
 import { usePageTitle } from '../../lib/usePageTitle';
 
+interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
+
+function useSlot(name: string) {
+  return useQuery({
+    queryKey: ['content', name],
+    queryFn: () => api.get<Slot | null>(`/content?slot=${name}`),
+    retry: 1,
+  });
+}
+
+export function IntroSlot({ slot }: { slot: string }) {
+  const q = useSlot(slot);
+  if (q.isPending) return <div className="mt-6"><Skeleton className="h-24" /></div>;
+  if (!q.data?.title && !q.data?.body) return null;
+  return (
+    <div className="mt-6 max-w-3xl">
+      {q.data.title && <h2 className="font-display text-xl font-bold uppercase">{q.data.title}</h2>}
+      {q.data.body && <p className="mt-1 whitespace-pre-line text-[15px] text-ink-muted">{q.data.body}</p>}
+    </div>
+  );
+}
+
 export function CompeticionesPage() {
   usePageTitle('Competiciones — CSD Soler');
   const q = useTournaments();
@@ -16,6 +38,7 @@ export function CompeticionesPage() {
   return (
     <Container className="py-10">
       <SectionHeading title="Competiciones" description="Torneos municipales donde compite el club." />
+      <IntroSlot slot="competiciones" />
       {q.isPending ? (
         <div className="mt-6 space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28" />)}</div>
       ) : q.isError ? (
@@ -73,6 +96,7 @@ export function CompeticionDetallePage() {
   return (
     <Container className="py-10">
       <SectionHeading title={t.name} description={t.description ?? `Temporada ${t.seasonLabel}`} />
+      <IntroSlot slot="torneo-detalle" />
       <div className="mt-4 flex flex-wrap gap-2">
         <Link to={`/fixture?torneo=${t.slug}`} className="rounded-card border border-line bg-white px-4 py-2.5 text-sm font-bold hover:border-primary">Fixture</Link>
         <Link to={`/resultados?torneo=${t.slug}`} className="rounded-card border border-line bg-white px-4 py-2.5 text-sm font-bold hover:border-primary">Resultados</Link>
