@@ -7,21 +7,26 @@ import { usePageTitle } from '../../../lib/usePageTitle';
 
 function CategoryRow({ cat, onSave }: { cat: AdminCategory; onSave: (id: string, kickoffTime: string | null) => void }) {
   const [time, setTime] = useState(cat.kickoffTime ?? '');
+  const valid = time === '' || /^\d{1,2}:\d{2}$/.test(time);
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 py-2">
       <span className="font-medium">{cat.name}</span>
       <span className="inline-flex items-center gap-2">
         <code className="rounded bg-black/5 px-1.5 py-0.5 text-xs">{cat.slug}</code>
         <input
-          type="time"
-          aria-label={`Hora fija de ${cat.name}`}
+          type="text"
+          inputMode="numeric"
+          placeholder="15:00"
+          maxLength={5}
+          aria-label={`Hora fija de ${cat.name} en formato 24 horas`}
           className={inputCls}
           value={time}
           onChange={(e) => setTime(e.target.value)}
         />
         <button
-          onClick={() => onSave(cat.id, time || null)}
-          className="inline-flex h-11 items-center rounded-card border border-line px-4 text-sm font-semibold hover:border-primary"
+          onClick={() => valid && onSave(cat.id, time || null)}
+          disabled={!valid}
+          className="inline-flex h-11 items-center rounded-card border border-line px-4 text-sm font-semibold hover:border-primary disabled:opacity-50"
         >
           Guardar hora
         </button>
@@ -74,8 +79,8 @@ export function CategoriesPage() {
               <Field label="Nombre (ej. 2011, Primera)">
                 <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="2011" />
               </Field>
-              <Field label="Hora fija (opcional)">
-                <input type="time" className={inputCls} value={time} onChange={(e) => setTime(e.target.value)} />
+              <Field label="Hora fija 24h (opcional)">
+                <input type="text" inputMode="numeric" placeholder="15:00" maxLength={5} className={inputCls} value={time} onChange={(e) => setTime(e.target.value)} />
               </Field>
             </InlineForm>
             <FormError message={w.error} />
