@@ -14,6 +14,8 @@ export interface Club {
   crestUrl: string | null;
   /** Alias histórico del backend (DB `crestPath`). El frontend acepta ambos. */
   crestPath?: string | null;
+  /** Link de Google Maps de la cancha. */
+  mapsUrl?: string | null;
   /** ID externo Ligas Deportivas, cuando corresponda. Nunca matchear solo por nombre. */
   externalId?: string | null;
 }

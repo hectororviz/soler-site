@@ -141,7 +141,13 @@ function HomeResultCard({ match }: { match: { id: string; tournamentName: string
       </div>
       <p className="mt-2 text-[13px] text-ink-muted">
         {formatKickoff(match.kickoff)}
-        {match.venue ? ` · ${match.venue}` : ''}
+        {match.venue ? (
+          (match.away.mapsUrl ?? match.home.mapsUrl) ? (
+            <> · <a href={(match.away.mapsUrl ?? match.home.mapsUrl)!} target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">Cómo llegar: {match.venue}</a></>
+          ) : (
+            ` · ${match.venue}`
+          )
+        ) : null}
       </p>
     </article>
   );
@@ -177,7 +183,13 @@ function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {  return (
       <p className="mt-3 flex items-center gap-1.5 text-sm text-ink-muted">
         <CalendarDays size={15} aria-hidden className="shrink-0" />
         {formatKickoff(clash.kickoff)}
-        {clash.venue ? ` · ${clash.venue}` : ''}
+        {clash.venue ? (
+          clash.away.mapsUrl ? (
+            <> · <a href={clash.away.mapsUrl} target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">Cómo llegar: {clash.venue}</a></>
+          ) : (
+            ` · ${clash.venue}`
+          )
+        ) : null}
       </p>
       <p className={cn('mt-1 text-[13px] text-ink-muted')}>
         {clash.categoryCount} {clash.categoryCount === 1 ? 'categoría' : 'categorías'}

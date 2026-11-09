@@ -14,6 +14,7 @@ const links = [
   { to: '/admin/temporadas', label: 'Temporadas' },
   { to: '/admin/transmisiones', label: 'Transmisiones' },
   { to: '/admin/contenido', label: 'Contenido' },
+  { to: '/admin/galeria', label: 'Galería' },
   { to: '/admin/sponsors', label: 'Sponsors' },
 ];
 

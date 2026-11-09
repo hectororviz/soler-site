@@ -30,6 +30,7 @@ export interface AdminClub {
   slug: string;
   crestPath: string | null;
   externalId: string | null;
+  mapsUrl: string | null;
 }
 
 export interface Participant {
@@ -86,4 +87,12 @@ export interface PageSlot {
   title: string | null;
   body: string | null;
   imagePath: string | null;
+}
+
+export interface GalleryImage {
+  id: string;
+  imagePath: string;
+  caption: string | null;
+  order: number;
+  active: boolean;
 }

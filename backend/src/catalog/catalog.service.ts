@@ -77,11 +77,11 @@ export class CatalogService {
     const rows = await this.prisma.club.findMany({ orderBy: { name: 'asc' } });
     return rows.map(toPublicClub);
   }
-  async createClub(data: { name: string; shortName: string; slug?: string; externalId?: string; crestPath?: string }) {
+  async createClub(data: { name: string; shortName: string; slug?: string; externalId?: string; crestPath?: string; mapsUrl?: string }) {
     const row = await this.prisma.club.create({ data: { ...data, slug: data.slug ?? slugify(data.shortName) } });
     return toPublicClub(row);
   }
-  async updateClub(id: string, data: Partial<{ name: string; shortName: string; externalId: string; crestPath: string }>) {
+  async updateClub(id: string, data: Partial<{ name: string; shortName: string; externalId: string; crestPath: string; mapsUrl: string }>) {
     const row = await this.prisma.club.update({ where: { id }, data }).catch(() => {
       throw new NotFoundException('Club inexistente.');
     });

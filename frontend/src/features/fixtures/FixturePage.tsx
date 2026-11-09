@@ -61,7 +61,14 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
           <ClubBadge club={clash.away} strong={awaySoler} />
         </span>
         <span className="hidden shrink-0 text-[13px] text-ink-muted sm:block">
-          {formatKickoff(firstKickoff)}{venue ? ` · ${venue}` : ''}
+          {formatKickoff(firstKickoff)}
+          {venue ? (
+            clash.away.mapsUrl ? (
+              <> · <a href={clash.away.mapsUrl} target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">Cómo llegar: {venue}</a></>
+            ) : (
+              ` · ${venue}`
+            )
+          ) : null}
         </span>
       </div>
     </article>

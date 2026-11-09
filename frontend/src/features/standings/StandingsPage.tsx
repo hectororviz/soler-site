@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
@@ -13,8 +13,9 @@ import { usePageTitle } from '../../lib/usePageTitle';
 
 export function PosicionesPage() {
   usePageTitle('Posiciones — CSD Soler');
-  const [torneo, setTorneo] = useState('');
-  const [categoria, setCategoria] = useState('general');
+  const [params] = useSearchParams();
+  const [torneo, setTorneo] = useState(params.get('torneo') ?? '');
+  const [categoria, setCategoria] = useState(params.get('categoria') ?? 'general');
   const tournamentsQ = useTournaments();
   const tournaments = tournamentsQ.data ?? [];
   const activeSlug = torneo || tournaments[0]?.slug || '';

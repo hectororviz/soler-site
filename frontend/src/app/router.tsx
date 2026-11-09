@@ -13,7 +13,12 @@ import { ClubsPage } from '../features/admin/pages/Clubs';
 import { FixtureAdminPage } from '../features/admin/pages/Fixture';
 import { BroadcastsPage } from '../features/admin/pages/Broadcasts';
 import { ContentPage } from '../features/admin/pages/Content';
-import { CompeticionDetallePage, CompeticionesPage, ContactoPage, ElClubPage, GaleriaPage, NotFoundPage, SolerTVPage } from '../pages/stubs';
+import { GalleryPage } from '../features/admin/pages/Gallery';
+import { NotFoundPage, SolerTVPage } from '../pages/stubs';
+import { CompeticionesPage, CompeticionDetallePage } from '../features/competitions/CompetitionsPage';
+import { ElClubPage } from '../features/club/ElClubPage';
+import { ContactoPage } from '../features/contact/ContactPage';
+import { GaleriaPage } from '../features/gallery/GalleryPage';
 import { ResultadosPage } from '../features/results/ResultsPage';
 import { PosicionesPage } from '../features/standings/StandingsPage';
 
@@ -51,6 +56,7 @@ export const router = createBrowserRouter([
           { path: 'fixture', element: <FixtureAdminPage /> },
           { path: 'transmisiones', element: <BroadcastsPage /> },
           { path: 'contenido', element: <ContentPage /> },
+          { path: 'galeria', element: <GalleryPage /> },
           { path: 'sponsors', element: <ContentPage /> },
         ],
       },

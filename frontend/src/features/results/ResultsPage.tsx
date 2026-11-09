@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { Container } from '../../components/layout/Container';
@@ -43,7 +43,8 @@ export function ResultadosPage() {
   usePageTitle('Resultados — CSD Soler');
   const tournamentsQ = useTournaments();
   const tournaments = tournamentsQ.data ?? [];
-  const [torneo, setTorneo] = useState('');
+  const [params] = useSearchParams();
+  const [torneo, setTorneo] = useState(params.get('torneo') ?? '');
   const activeSlug = torneo || tournaments[0]?.slug || '';
 
   const roundsQ = useQuery({

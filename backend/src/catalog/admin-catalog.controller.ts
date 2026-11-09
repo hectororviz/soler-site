@@ -33,6 +33,7 @@ class ClubDto {
   @IsString() name!: string;
   @IsString() shortName!: string;
   @IsOptional() @IsString() externalId?: string;
+  @IsOptional() @IsString() mapsUrl?: string;
 }
 class ParticipantDto {
   @IsString() clubId!: string;

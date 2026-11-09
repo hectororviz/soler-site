@@ -69,6 +69,7 @@ model Club {
   slug       String   @unique
   crestPath  String?
   externalId String?
+  mapsUrl    String?
   createdAt  DateTime @default(now())
 
   participations TournamentParticipant[]
@@ -167,6 +168,15 @@ model Sponsor {
   name      String
   logoPath  String?
   href      String?
+  order     Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+}
+
+model GalleryImage {
+  id        String   @id @default(cuid())
+  imagePath String
+  caption   String?
   order     Int      @default(0)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())

@@ -28,4 +28,20 @@ export class ContentService {
   deleteSponsor(id: string) {
     return this.prisma.sponsor.delete({ where: { id } });
   }
+
+  gallery() {
+    return this.prisma.galleryImage.findMany({ where: { active: true }, orderBy: [{ order: 'asc' }, { createdAt: 'desc' }] });
+  }
+  allGallery() {
+    return this.prisma.galleryImage.findMany({ orderBy: [{ order: 'asc' }, { createdAt: 'desc' }] });
+  }
+  createGalleryImage(data: { imagePath: string; caption?: string; order?: number }) {
+    return this.prisma.galleryImage.create({ data });
+  }
+  updateGalleryImage(id: string, data: Partial<{ caption: string; order: number; active: boolean }>) {
+    return this.prisma.galleryImage.update({ where: { id }, data });
+  }
+  deleteGalleryImage(id: string) {
+    return this.prisma.galleryImage.delete({ where: { id } });
+  }
 }
