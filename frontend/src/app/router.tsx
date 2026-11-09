@@ -13,17 +13,9 @@ import { ClubsPage } from '../features/admin/pages/Clubs';
 import { FixtureAdminPage } from '../features/admin/pages/Fixture';
 import { BroadcastsPage } from '../features/admin/pages/Broadcasts';
 import { ContentPage } from '../features/admin/pages/Content';
-import {
-  CompeticionDetallePage,
-  CompeticionesPage,
-  ContactoPage,
-  ElClubPage,
-  GaleriaPage,
-  NotFoundPage,
-  PosicionesPage,
-  ResultadosPage,
-  SolerTVPage,
-} from '../pages/stubs';
+import { CompeticionDetallePage, CompeticionesPage, ContactoPage, ElClubPage, GaleriaPage, NotFoundPage, SolerTVPage } from '../pages/stubs';
+import { ResultadosPage } from '../features/results/ResultsPage';
+import { PosicionesPage } from '../features/standings/StandingsPage';
 
 export const router = createBrowserRouter([
   {

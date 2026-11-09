@@ -1,6 +1,7 @@
-import { Injectable, BadRequestException, NotFoundException, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { toPublicClub } from '../catalog/club-mapper';
+import { SupabaseResultsService } from '../supabase/supabase-results.service';
 
 const isSolerClub = (c: any) =>
   c && [c.slug, c.shortName, c.name].some((v: string) => v?.toLowerCase().includes('soler'));
@@ -25,7 +26,10 @@ const SOLER_SHORT = 'soler'; // legado: se usa isSolerClub (slug/nombre), no igu
 
 @Injectable()
 export class FixturesService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly ligas: SupabaseResultsService,
+  ) {}
 
   // ---------- Matchdays ----------
   matchdays(tournamentId: string) {
@@ -322,15 +326,11 @@ export class FixturesService {
     return out.slice(0, limit);
   }
 
-  // ---------- Resultados y posiciones: fuente Ligas Deportivas (Etapa 3) ----------
-  results() {
-    throw new ServiceUnavailableException(
-      'Integración con Ligas Deportivas pendiente (Etapa 3). No se muestran resultados inventados.',
-    );
+  // ---------- Resultados y posiciones: fuente Supabase Ligas Deportivas ----------
+  results(query: { tournament?: string; category?: string; limit?: number } = {}) {
+    return this.ligas.results(query);
   }
-  standings() {
-    throw new ServiceUnavailableException(
-      'Integración con Ligas Deportivas pendiente (Etapa 3). No se muestran posiciones inventadas.',
-    );
+  standings(query: { tournament?: string; category?: string } = {}) {
+    return this.ligas.standings(query);
   }
 }

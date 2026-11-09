@@ -16,13 +16,17 @@ export class FixturesController {
   }
 
   @Get('results')
-  results() {
-    return this.fixtures.results();
+  results(
+    @Query('torneo') torneo?: string,
+    @Query('categoria') categoria?: string,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit = 50,
+  ) {
+    return this.fixtures.results({ tournament: torneo, category: categoria, limit: Math.min(limit, 100) });
   }
 
   @Get('standings')
-  standings() {
-    return this.fixtures.standings();
+  standings(@Query('torneo') torneo?: string, @Query('categoria') categoria?: string) {
+    return this.fixtures.standings({ tournament: torneo, category: categoria });
   }
 
   @Get('tournaments/:slug/fixture')

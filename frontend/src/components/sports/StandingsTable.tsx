@@ -26,7 +26,7 @@ export function StandingsTable({ rows }: { rows: StandingRow[] }) {
             >
               <td className="px-3 py-3 tabular-nums text-ink-muted">{r.position}</td>
               <td className={cn('px-3 py-3', r.isSoler && 'border-l-4 border-l-primary font-semibold')}>
-                <ClubBadge club={r.club} size="sm" />
+                <ClubBadge club={r.club} size="sm" strong={r.isSoler} />
               </td>
               <td className="px-3 py-3 text-center tabular-nums">{r.played}</td>
               <td className="px-3 py-3 text-center tabular-nums">{r.won}</td>
