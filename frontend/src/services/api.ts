@@ -12,10 +12,35 @@ import { ApiError } from '../types';
 const BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 const TIMEOUT_MS = Number(import.meta.env.VITE_API_TIMEOUT_MS ?? 8000);
 const ADMIN_TOKEN_KEY = 'csd-admin-token';
+export const ADMIN_UNAUTHORIZED_EVENT = 'admin-unauthorized';
+
+/** Decodifica `exp` del JWT sin verificar firma (solo para UX, el back verifica). */
+export function isAdminTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+    if (typeof payload.exp !== 'number') return false;
+    return payload.exp * 1000 <= Date.now();
+  } catch {
+    return false;
+  }
+}
+
+function notifyAdminUnauthorized() {
+  try {
+    window.dispatchEvent(new CustomEvent(ADMIN_UNAUTHORIZED_EVENT));
+  } catch {
+    /* entorno sin window */
+  }
+}
 
 export function getAdminToken(): string | null {
   try {
-    return localStorage.getItem(ADMIN_TOKEN_KEY);
+    const token = localStorage.getItem(ADMIN_TOKEN_KEY);
+    if (token && isAdminTokenExpired(token)) {
+      localStorage.removeItem(ADMIN_TOKEN_KEY);
+      return null;
+    }
+    return token;
   } catch {
     return null;
   }
@@ -52,7 +77,10 @@ async function request<T>(path: string, method: string, opts: RequestOptions = {
     if (!opts.form) headers['Content-Type'] = 'application/json';
     if (opts.admin) {
       const token = getAdminToken();
-      if (!token) throw new ApiError('Sesión administrativa requerida.', 'http', 401);
+      if (!token) {
+        notifyAdminUnauthorized();
+        throw new ApiError('Sesión administrativa requerida.', 'http', 401);
+      }
       headers.Authorization = `Bearer ${token}`;
     }
     const res = await fetch(`${BASE}${path}`, {
@@ -66,7 +94,10 @@ async function request<T>(path: string, method: string, opts: RequestOptions = {
     const data = text ? (JSON.parse(text) as T) : (undefined as T);
     if (!res.ok) {
       const msg = (data as { message?: string })?.message ?? `Error ${res.status}.`;
-      if (res.status === 401) throw new ApiError(msg || 'No autorizado.', 'http', 401);
+      if (res.status === 401) {
+        if (opts.admin) notifyAdminUnauthorized();
+        throw new ApiError(msg || 'No autorizado.', 'http', 401);
+      }
       if (res.status === 403) throw new ApiError(msg || 'Operación restringida.', 'http', 403);
       if (res.status === 404) throw new ApiError(msg || 'Recurso no encontrado.', 'http', 404);
       if (res.status >= 500) throw new ApiError('Servicio temporalmente no disponible.', 'unavailable', res.status);

@@ -7,7 +7,7 @@ import { usePageTitle } from '../../../lib/usePageTitle';
 
 export function AdminLoginPage() {
   usePageTitle('Ingresar — Admin CSD Soler');
-  const { login } = useAdminAuth();
+  const { login, sessionExpired } = useAdminAuth();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -34,6 +34,11 @@ export function AdminLoginPage() {
         <img src="/escudo.svg" alt="Escudo del Club Social y Deportivo Soler" className="h-16 w-16 object-contain" />
         <h1 className="mt-3 font-display text-3xl font-extrabold uppercase">Administración</h1>
         <p className="mt-1 text-sm text-ink-muted">Acceso privado del Club Social y Deportivo Soler.</p>
+        {sessionExpired && (
+          <p role="alert" className="mt-3 rounded-card bg-amber-100 px-3 py-2 text-sm font-medium text-amber-800">
+            Tu sesión venció. Volvé a ingresar.
+          </p>
+        )}
         <form onSubmit={submit} className="mt-5 flex flex-col gap-3">
           <label className="flex flex-col gap-1 text-sm font-semibold">
             Usuario
