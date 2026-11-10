@@ -13,6 +13,9 @@ import { cn } from '../../lib/utils';
 import type { Club, UpcomingClash } from '../../types';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
 import { useCategories, useTournaments } from '../fixtures/useFixture';
+import { useQuery } from '@tanstack/react-query';
+import { api, resolveCrest } from '../../services/api';
+import { MiniMd } from '../../lib/miniMd';
 
 import { usePageMeta } from '../../lib/usePageTitle';
 
@@ -245,6 +248,14 @@ export function HomePage() {
   const upcoming = useUpcoming();
   const live = useLiveBroadcast();
   const tournamentsQ = useTournaments();
+  const heroQ = useQuery({
+    queryKey: ['content', 'hero'],
+    queryFn: () => api.get<{ title: string | null; body: string | null; imagePath: string | null } | null>('/content?slot=hero'),
+    retry: 1,
+  });
+  const heroImg = (heroQ.data?.imagePath ? resolveCrest(heroQ.data.imagePath) : null) ?? '/hero.jpg';
+  const heroTitle = heroQ.data?.title?.trim() || 'Más que un club, un lugar para compartir en familia.';
+  const heroBody = heroQ.data?.body?.trim() || 'Viví toda la actividad deportiva del Club Social y Deportivo Soler.';
   const tournamentsBySlug = new Map((tournamentsQ.data ?? []).map((t) => [t.slug, t.id]));
 
   return (
@@ -252,7 +263,7 @@ export function HomePage() {
       {/* 1. Hero fotográfico */}
       <section className="relative overflow-hidden bg-pitch text-white" aria-label="Presentación del club">
         <img
-          src="/hero.jpg"
+          src={heroImg}
           alt="Equipos y comunidad del Club Social y Deportivo Soler"
           className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
@@ -270,11 +281,11 @@ export function HomePage() {
             <Trophy size={14} aria-hidden /> Malvinas Argentinas · Fútbol femenino y juveniles
           </p>
           <h1 className="mt-4 max-w-2xl font-display text-4xl font-extrabold uppercase leading-[0.95] sm:text-5xl md:text-7xl">
-            Más que un club, un lugar para compartir en familia.
+            {heroTitle}
           </h1>
-          <p className="mt-4 max-w-xl text-base text-white/80 md:text-lg">
-            Viví toda la actividad deportiva del Club Social y Deportivo Soler.
-          </p>
+          <div className="mt-4 max-w-xl text-base text-white/80 md:text-lg">
+            <MiniMd text={heroBody} className="space-y-2" linkClassName="font-semibold text-gold hover:underline" />
+          </div>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
             <Link to="/fixture" className="inline-flex h-12 w-full items-center justify-center rounded-card bg-primary px-6 font-bold text-white hover:bg-primary-hover sm:w-auto">
               Ver próximos partidos

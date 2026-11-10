@@ -5,6 +5,7 @@ import { Container } from '../../components/layout/Container';
 import { EmptyState, SectionHeading, Skeleton } from '../../components/ui/feedback';
 import { api, resolveCrest } from '../../services/api';
 import { usePageMeta } from '../../lib/usePageTitle';
+import { MiniMd } from '../../lib/miniMd';
 
 interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
 
@@ -29,7 +30,11 @@ export function ElClubPage() {
         <div className="mt-6"><EmptyState title="Contenido en preparación" hint="Estamos cargando la historia del club." /></div>
       ) : (
         <div className="mt-6 grid gap-6 md:grid-cols-[1fr_320px]">
-          <div className="whitespace-pre-line text-[15px] leading-relaxed">{q.data.body}</div>
+          {q.data?.body ? (
+            <MiniMd text={q.data.body} className="space-y-3 whitespace-pre-line text-[15px] leading-relaxed" />
+          ) : (
+            <p className="text-[15px] text-ink-muted">Contenido en preparación.</p>
+          )}
           <div>
             {img ? (
               <img src={img} alt={q.data.title ?? 'Club Social y Deportivo Soler'} className="aspect-[4/3] w-full rounded-card border border-line object-cover" loading="lazy" decoding="async" width={640} height={480} />

@@ -5,6 +5,7 @@ import { Container } from '../../components/layout/Container';
 import { EmptyState, SectionHeading, Skeleton } from '../../components/ui/feedback';
 import { api, resolveCrest } from '../../services/api';
 import { usePageMeta } from '../../lib/usePageTitle';
+import { MiniMd } from '../../lib/miniMd';
 
 interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
 interface Sponsor { id: string; name: string; logoUrl: string | null; logoPath?: string | null; href: string | null }
@@ -32,7 +33,7 @@ export function ContactoPage() {
       {slotQ.isPending ? (
         <div className="mt-6"><Skeleton className="h-40" /></div>
       ) : slotQ.data?.body ? (
-        <div className="mt-6 max-w-3xl whitespace-pre-line text-[15px] leading-relaxed">{slotQ.data.body}</div>
+        <div className="mt-6 max-w-3xl"><MiniMd text={slotQ.data.body} /></div>
       ) : (
         <div className="mt-6"><EmptyState title="Contenido en preparación" hint="Estamos cargando los datos de contacto." /></div>
       )}

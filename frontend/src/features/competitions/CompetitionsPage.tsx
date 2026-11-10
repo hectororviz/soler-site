@@ -8,6 +8,7 @@ import { api } from '../../services/api';
 import type { Category } from '../../types';
 import { useTournaments } from '../fixtures/useFixture';
 import { usePageMeta } from '../../lib/usePageTitle';
+import { MiniMd } from '../../lib/miniMd';
 
 interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
 
@@ -26,7 +27,7 @@ export function IntroSlot({ slot }: { slot: string }) {
   return (
     <div className="mt-6 max-w-3xl">
       {q.data.title && <h2 className="font-display text-xl font-bold uppercase">{q.data.title}</h2>}
-      {q.data.body && <p className="mt-1 whitespace-pre-line text-[15px] text-ink-muted">{q.data.body}</p>}
+      {q.data.body && <MiniMd text={q.data.body} className="mt-1 space-y-2 text-[15px] leading-relaxed text-ink-muted" />}
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { AdminPage, ConfirmButton, FormError, InlineForm, Field, Panel, inputCls
 import { useAdminList, useAdminWrite } from '../hooks';
 import type { PageSlot, Sponsor } from '../types';
 import { usePageTitle } from '../../../lib/usePageTitle';
+import { MiniMd } from '../../../lib/miniMd';
 
 const SLOTS = ['club', 'contacto', 'hero', 'competiciones', 'torneo-detalle'];
 
@@ -55,6 +56,15 @@ function SlotEditor({ slot }: { slot: string }) {
             </Field>
             <Field label="Texto">
               <textarea className={`${inputCls} h-28 py-2`} value={body} onChange={(e) => setBody(e.target.value)} />
+              <p className="mt-1 text-xs text-ink-muted">
+                Mini-markdown: <code>**negrita**</code>, <code>*itálica*</code>, <code>[texto](https://…)</code>, líneas con <code>- item</code>. Doble enter = párrafo.
+              </p>
+              {body.trim() && (
+                <div className="mt-2 rounded-card border border-line bg-black/[0.02] p-3">
+                  <p className="mb-1 text-xs font-bold uppercase text-ink-muted">Vista previa</p>
+                  <MiniMd text={body} className="space-y-2 text-sm leading-relaxed" />
+                </div>
+              )}
             </Field>
             <Field label="Imagen (opcional)">
               {imagePath && <img src={resolveCrest(imagePath) ?? ''} alt="" className="mb-2 h-20 w-auto object-contain" width={160} height={80} loading="lazy" decoding="async" />}
