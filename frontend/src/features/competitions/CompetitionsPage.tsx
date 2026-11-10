@@ -7,7 +7,7 @@ import { EmptyState, ErrorState, SectionHeading, Skeleton } from '../../componen
 import { api } from '../../services/api';
 import type { Category } from '../../types';
 import { useTournaments } from '../fixtures/useFixture';
-import { usePageTitle } from '../../lib/usePageTitle';
+import { usePageMeta } from '../../lib/usePageTitle';
 
 interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
 
@@ -32,12 +32,16 @@ export function IntroSlot({ slot }: { slot: string }) {
 }
 
 export function CompeticionesPage() {
-  usePageTitle('Competiciones — CSD Soler');
+  usePageMeta({
+    title: 'Competiciones — CSD Soler',
+    description: 'Torneos municipales donde compite el club: Juveniles Domingos, Sábados y Fútbol Femenino. Temporada 2026.',
+    path: '/competiciones',
+  });
   const q = useTournaments();
   const list = q.data ?? [];
   return (
     <Container className="py-10">
-      <SectionHeading title="Competiciones" description="Torneos municipales donde compite el club." />
+      <SectionHeading as="h1" title="Competiciones" description="Torneos municipales donde compite el club." />
       <IntroSlot slot="competiciones" />
       {q.isPending ? (
         <div className="mt-6 space-y-3">{[0, 1, 2].map((i) => <Skeleton key={i} className="h-28" />)}</div>
@@ -69,9 +73,15 @@ export function CompeticionesPage() {
 
 export function CompeticionDetallePage() {
   const { torneoSlug } = useParams();
-  usePageTitle('Torneo — CSD Soler');
   const tournamentsQ = useTournaments();
   const t = (tournamentsQ.data ?? []).find((x) => x.slug === torneoSlug);
+  usePageMeta({
+    title: t ? `${t.name} — CSD Soler` : 'Torneo — CSD Soler',
+    description: t
+      ? `${t.name}: fixture, resultados y posiciones. ${t.description ?? `Temporada ${t.seasonLabel}`} Club Soler.`
+      : 'Detalle del torneo del Club Soler: fixture, resultados y posiciones.',
+    path: `/competiciones/${torneoSlug ?? ''}`,
+  });
   const catsQ = useQuery({
     queryKey: ['categories', t?.id],
     queryFn: () => api.get<Category[]>(`/categories?tournament=${encodeURIComponent(t!.id)}`),
@@ -81,7 +91,7 @@ export function CompeticionDetallePage() {
   const cats = catsQ.data ?? [];
   if (tournamentsQ.isPending) {
     return (
-      <Container className="py-10"><SectionHeading title="Torneo" description="" />
+      <Container className="py-10"><SectionHeading as="h1" title="Torneo" description="" />
         <div className="mt-6"><Skeleton className="h-28" /></div>
       </Container>
     );
@@ -95,7 +105,7 @@ export function CompeticionDetallePage() {
   }
   return (
     <Container className="py-10">
-      <SectionHeading title={t.name} description={t.description ?? `Temporada ${t.seasonLabel}`} />
+      <SectionHeading as="h1" title={t.name} description={t.description ?? `Temporada ${t.seasonLabel}`} />
       <IntroSlot slot="torneo-detalle" />
       <div className="mt-4 flex flex-wrap gap-2">
         <Link to={`/fixture?torneo=${t.slug}`} className="rounded-card border border-line bg-white px-4 py-2.5 text-sm font-bold hover:border-primary">Fixture</Link>

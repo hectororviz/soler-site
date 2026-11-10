@@ -31,7 +31,7 @@ export function AdminLoginPage() {
   return (
     <Container className="py-16">
       <div className="mx-auto max-w-md rounded-card border border-line bg-white p-6 shadow-soft md:p-8">
-        <img src="/escudo.svg" alt="Escudo del Club Social y Deportivo Soler" className="h-16 w-16 object-contain" />
+        <img src="/escudo.svg" alt="Escudo del Club Social y Deportivo Soler" className="h-16 w-16 object-contain" width={64} height={64} />
         <h1 className="mt-3 font-display text-3xl font-extrabold uppercase">Administración</h1>
         <p className="mt-1 text-sm text-ink-muted">Acceso privado del Club Social y Deportivo Soler.</p>
         {sessionExpired && (

@@ -4,7 +4,9 @@ import { cn } from '../../lib/utils';
 
 export function StandingsTable({ rows }: { rows: StandingRow[] }) {
   return (
-    <div className="table-scroll" role="region" aria-label="Tabla de posiciones" tabIndex={0}>
+    <>
+      <p aria-hidden className="mb-2 text-xs text-ink-muted sm:hidden">Deslizá horizontalmente para ver toda la tabla →</p>
+      <div className="table-scroll" role="region" aria-label="Tabla de posiciones" tabIndex={0}>
       <table className="w-full min-w-[640px] border-collapse bg-white text-sm">
         <thead>
           <tr className="border-b border-line text-left text-[13px] uppercase text-ink-muted">
@@ -39,5 +41,6 @@ export function StandingsTable({ rows }: { rows: StandingRow[] }) {
         </tbody>
       </table>
     </div>
+    </>
   );
 }

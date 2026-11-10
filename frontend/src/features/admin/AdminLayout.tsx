@@ -1,6 +1,6 @@
 import { Link, Navigate, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, Menu, X } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { cn } from '../../lib/utils';
 import { useAdminAuth } from './auth';
 import { AdminAuthProvider } from './auth';
@@ -35,7 +35,7 @@ function Shell() {
       {/* Sidebar escritorio */}
       <aside className="hidden w-60 shrink-0 flex-col border-r border-line bg-pitch text-white lg:flex">
         <div className="flex h-16 items-center gap-2 px-4">
-          <img src="/escudo.svg" alt="" className="h-8 w-8 object-contain" />
+          <img src="/escudo.svg" alt="" className="h-8 w-8 object-contain" width={32} height={32} />
           <span className="font-display text-lg font-extrabold uppercase">Admin Soler</span>
         </div>
         <nav className="flex flex-1 flex-col gap-1 p-3" aria-label="Administración">
@@ -63,7 +63,7 @@ function Shell() {
         {/* Topbar móvil */}
         <header className="flex h-16 items-center justify-between border-b border-line bg-white px-4 lg:hidden">
           <Link to="/admin" className="flex items-center gap-2 font-display text-lg font-extrabold uppercase">
-            <img src="/escudo.svg" alt="" className="h-8 w-8 object-contain" /> Admin Soler
+            <img src="/escudo.svg" alt="" className="h-8 w-8 object-contain" width={32} height={32} /> Admin Soler
           </Link>
           <button
             className="inline-flex h-11 w-11 items-center justify-center rounded-card border border-line"
@@ -103,6 +103,19 @@ function Shell() {
 }
 
 export function AdminSection() {
+  useEffect(() => {
+    let meta = document.head.querySelector('meta[name="robots"]') as HTMLMetaElement | null;
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.setAttribute('name', 'robots');
+      document.head.appendChild(meta);
+    }
+    const prev = meta.content;
+    meta.content = 'noindex,nofollow';
+    return () => {
+      meta.content = prev;
+    };
+  }, []);
   return (
     <AdminAuthProvider>
       <Outlet />

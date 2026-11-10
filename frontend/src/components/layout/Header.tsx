@@ -29,13 +29,36 @@ function Crest() {
 
 export function Header({ liveActive = false }: { liveActive?: boolean }) {
   const [open, setOpen] = useState(false);
+  const openRef = useRef<HTMLButtonElement>(null);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!open) return;
+    const opener = openRef.current;
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') {
+        setOpen(false);
+        return;
+      }
+      if (e.key !== 'Tab') return;
+      const root = panelRef.current;
+      if (!root) return;
+      const items = [...root.querySelectorAll<HTMLElement>('a[href], button:not([disabled])')].filter(
+        (el) => el.offsetParent !== null,
+      );
+      if (!items.length) return;
+      const first = items[0];
+      const last = items[items.length - 1];
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey && (active === first || !root.contains(active))) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      }
     };
     document.addEventListener('keydown', onKey);
     const prev = document.body.style.overflow;
@@ -43,6 +66,7 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
     return () => {
       document.removeEventListener('keydown', onKey);
       document.body.style.overflow = prev;
+      opener?.focus();
     };
   }, [open ]);
 
@@ -91,6 +115,7 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
               )}
             </Link>
             <button
+              ref={openRef}
               className="inline-flex h-11 w-11 items-center justify-center rounded-card border border-line lg:hidden"
               aria-expanded={open}
               aria-controls="menu-movil"
@@ -106,7 +131,7 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} aria-hidden />
-          <div id="menu-movil" className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-white shadow-lift">
+          <div ref={panelRef} id="menu-movil" className="absolute right-0 top-0 flex h-full w-[86%] max-w-sm flex-col bg-white shadow-lift">
             <div className="flex h-16 items-center justify-between border-b border-line px-4">
               <span className="font-display text-xl font-extrabold uppercase">Menú</span>
               <button

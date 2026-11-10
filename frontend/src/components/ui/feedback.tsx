@@ -53,15 +53,19 @@ export function SectionHeading({
   title,
   description,
   link,
+  as = 'h2',
 }: {
   title: string;
   description?: string;
   link?: React.ReactNode;
+  /** Nivel de heading: `h1` para el título principal de la página, `h2` para secciones. */
+  as?: 'h1' | 'h2';
 }) {
+  const Tag = as;
   return (
     <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
       <div>
-        <h2 className="font-display text-3xl font-bold uppercase leading-none md:text-4xl">{title}</h2>
+        <Tag className="font-display text-3xl font-bold uppercase leading-none md:text-4xl">{title}</Tag>
         {description && <p className="mt-2 max-w-2xl text-[15px] text-ink-muted">{description}</p>}
       </div>
       {link}

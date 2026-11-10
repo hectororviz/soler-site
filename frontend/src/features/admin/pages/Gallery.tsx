@@ -21,7 +21,7 @@ function GalleryRow({ item, onSave, onToggle, onRemove }: {
   };
   return (
     <li className={`overflow-hidden rounded-card border ${item.active ? 'border-line' : 'border-dashed opacity-60'}`}>
-      {src && <img src={src} alt={item.caption ?? ''} className="h-40 w-full object-cover" loading="lazy" />}
+      {src && <img src={src} alt={item.caption ?? ''} className="aspect-[3/2] h-40 w-full object-cover" loading="lazy" decoding="async" width={480} height={160} />}
       <div className="flex items-center justify-between gap-2 p-2">
         {editing ? (
           <span className="flex min-w-0 flex-1 items-center gap-2">

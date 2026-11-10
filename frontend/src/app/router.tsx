@@ -1,63 +1,75 @@
 import { createBrowserRouter } from 'react-router-dom';
 import { PublicLayout } from '../components/layout/PublicLayout';
-import { HomePage } from '../features/home/HomePage';
-import { FixturePage } from '../features/fixtures/FixturePage';
-import { AdminLayout, AdminSection } from '../features/admin/AdminLayout';
-import { AdminLoginPage } from '../features/admin/pages/Login';
-import { AdminDashboardPage } from '../features/admin/pages/Dashboard';
-import { SeasonsPage } from '../features/admin/pages/Seasons';
-import { TournamentsPage } from '../features/admin/pages/Tournaments';
-import { TournamentDetailPage } from '../features/admin/pages/TournamentDetail';
-import { CategoriesPage } from '../features/admin/pages/Categories';
-import { ClubsPage } from '../features/admin/pages/Clubs';
-import { FixtureAdminPage } from '../features/admin/pages/Fixture';
-import { BroadcastsPage } from '../features/admin/pages/Broadcasts';
-import { ContentPage } from '../features/admin/pages/Content';
-import { GalleryPage } from '../features/admin/pages/Gallery';
-import { NotFoundPage, SolerTVPage } from '../pages/stubs';
-import { CompeticionesPage, CompeticionDetallePage } from '../features/competitions/CompetitionsPage';
-import { ElClubPage } from '../features/club/ElClubPage';
-import { ContactoPage } from '../features/contact/ContactPage';
-import { GaleriaPage } from '../features/gallery/GalleryPage';
-import { ResultadosPage } from '../features/results/ResultsPage';
-import { PosicionesPage } from '../features/standings/StandingsPage';
+import { lazyPage, susp } from './lazy';
+
+const HomePage = lazyPage(() => import('../features/home/HomePage'), 'HomePage');
+const FixturePage = lazyPage(() => import('../features/fixtures/FixturePage'), 'FixturePage');
+const CompeticionesPage = lazyPage(() => import('../features/competitions/CompetitionsPage'), 'CompeticionesPage');
+const CompeticionDetallePage = lazyPage(
+  () => import('../features/competitions/CompetitionsPage'),
+  'CompeticionDetallePage',
+);
+const ResultadosPage = lazyPage(() => import('../features/results/ResultsPage'), 'ResultadosPage');
+const PosicionesPage = lazyPage(() => import('../features/standings/StandingsPage'), 'PosicionesPage');
+const ElClubPage = lazyPage(() => import('../features/club/ElClubPage'), 'ElClubPage');
+const GaleriaPage = lazyPage(() => import('../features/gallery/GalleryPage'), 'GaleriaPage');
+const ContactoPage = lazyPage(() => import('../features/contact/ContactPage'), 'ContactoPage');
+const SolerTVPage = lazyPage(() => import('../pages/stubs'), 'SolerTVPage');
+const NotFoundPage = lazyPage(() => import('../pages/stubs'), 'NotFoundPage');
+
+const AdminLayout = lazyPage(() => import('../features/admin/AdminLayout'), 'AdminLayout');
+const AdminSection = lazyPage(() => import('../features/admin/AdminLayout'), 'AdminSection');
+const AdminLoginPage = lazyPage(() => import('../features/admin/pages/Login'), 'AdminLoginPage');
+const AdminDashboardPage = lazyPage(() => import('../features/admin/pages/Dashboard'), 'AdminDashboardPage');
+const SeasonsPage = lazyPage(() => import('../features/admin/pages/Seasons'), 'SeasonsPage');
+const TournamentsPage = lazyPage(() => import('../features/admin/pages/Tournaments'), 'TournamentsPage');
+const TournamentDetailPage = lazyPage(
+  () => import('../features/admin/pages/TournamentDetail'),
+  'TournamentDetailPage',
+);
+const CategoriesPage = lazyPage(() => import('../features/admin/pages/Categories'), 'CategoriesPage');
+const ClubsPage = lazyPage(() => import('../features/admin/pages/Clubs'), 'ClubsPage');
+const FixtureAdminPage = lazyPage(() => import('../features/admin/pages/Fixture'), 'FixtureAdminPage');
+const BroadcastsPage = lazyPage(() => import('../features/admin/pages/Broadcasts'), 'BroadcastsPage');
+const ContentPage = lazyPage(() => import('../features/admin/pages/Content'), 'ContentPage');
+const GalleryAdminPage = lazyPage(() => import('../features/admin/pages/Gallery'), 'GalleryPage');
 
 export const router = createBrowserRouter([
   {
     element: <PublicLayout />,
     children: [
-      { path: '/', element: <HomePage /> },
-      { path: '/competiciones', element: <CompeticionesPage /> },
-      { path: '/competiciones/:torneoSlug', element: <CompeticionDetallePage /> },
-      { path: '/fixture', element: <FixturePage /> },
-      { path: '/resultados', element: <ResultadosPage /> },
-      { path: '/posiciones', element: <PosicionesPage /> },
-      { path: '/soler-tv', element: <SolerTVPage /> },
-      { path: '/el-club', element: <ElClubPage /> },
-      { path: '/galeria', element: <GaleriaPage /> },
-      { path: '/contacto', element: <ContactoPage /> },
-      { path: '*', element: <NotFoundPage /> },
+      { path: '/', element: susp(<HomePage />) },
+      { path: '/competiciones', element: susp(<CompeticionesPage />) },
+      { path: '/competiciones/:torneoSlug', element: susp(<CompeticionDetallePage />) },
+      { path: '/fixture', element: susp(<FixturePage />) },
+      { path: '/resultados', element: susp(<ResultadosPage />) },
+      { path: '/posiciones', element: susp(<PosicionesPage />) },
+      { path: '/soler-tv', element: susp(<SolerTVPage />) },
+      { path: '/el-club', element: susp(<ElClubPage />) },
+      { path: '/galeria', element: susp(<GaleriaPage />) },
+      { path: '/contacto', element: susp(<ContactoPage />) },
+      { path: '*', element: susp(<NotFoundPage />) },
     ],
   },
   {
     path: '/admin',
-    element: <AdminSection />,
+    element: susp(<AdminSection />),
     children: [
-      { path: 'login', element: <AdminLoginPage /> },
+      { path: 'login', element: susp(<AdminLoginPage />) },
       {
-        element: <AdminLayout />,
+        element: susp(<AdminLayout />),
         children: [
-          { index: true, element: <AdminDashboardPage /> },
-          { path: 'temporadas', element: <SeasonsPage /> },
-          { path: 'torneos', element: <TournamentsPage /> },
-          { path: 'torneos/:id', element: <TournamentDetailPage /> },
-          { path: 'categorias', element: <CategoriesPage /> },
-          { path: 'clubes', element: <ClubsPage /> },
-          { path: 'fixture', element: <FixtureAdminPage /> },
-          { path: 'transmisiones', element: <BroadcastsPage /> },
-          { path: 'contenido', element: <ContentPage /> },
-          { path: 'galeria', element: <GalleryPage /> },
-          { path: 'sponsors', element: <ContentPage /> },
+          { index: true, element: susp(<AdminDashboardPage />) },
+          { path: 'temporadas', element: susp(<SeasonsPage />) },
+          { path: 'torneos', element: susp(<TournamentsPage />) },
+          { path: 'torneos/:id', element: susp(<TournamentDetailPage />) },
+          { path: 'categorias', element: susp(<CategoriesPage />) },
+          { path: 'clubes', element: susp(<ClubsPage />) },
+          { path: 'fixture', element: susp(<FixtureAdminPage />) },
+          { path: 'transmisiones', element: susp(<BroadcastsPage />) },
+          { path: 'contenido', element: susp(<ContentPage />) },
+          { path: 'galeria', element: susp(<GalleryAdminPage />) },
+          { path: 'sponsors', element: susp(<ContentPage />) },
         ],
       },
     ],

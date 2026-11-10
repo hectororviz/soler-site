@@ -14,7 +14,7 @@ import type { Club, UpcomingClash } from '../../types';
 import { useLiveBroadcast, useResults, useUpcoming } from './useHomeData';
 import { useCategories, useTournaments } from '../fixtures/useFixture';
 
-import { usePageTitle } from '../../lib/usePageTitle';
+import { usePageMeta } from '../../lib/usePageTitle';
 
 /** Fila con scroll horizontal arrastrable (mouse/táctil), sin barra visible + flechas. */
 function DragRow({ children, title }: { children: ReactNode; title?: ReactNode }) {
@@ -29,27 +29,30 @@ function DragRow({ children, title }: { children: ReactNode; title?: ReactNode }
       {(title) && (
         <div className="mb-2 flex items-center justify-between gap-2">
           <p className="text-sm font-bold uppercase text-ink-muted">{title}</p>
-          <span className="inline-flex gap-1">
+          <span className="inline-flex gap-2">
             <button
               aria-label="Desplazar a la izquierda"
               onClick={() => nudge(-1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
             >
-              <ArrowLeft size={15} />
+              <ArrowLeft size={16} />
             </button>
             <button
               aria-label="Desplazar a la derecha"
               onClick={() => nudge(1)}
-              className="inline-flex h-8 w-8 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-card border border-line bg-white text-ink hover:border-primary"
             >
-              <ArrowRight size={15} />
+              <ArrowRight size={16} />
             </button>
           </span>
         </div>
       )}
       <div
         ref={ref}
-        className="flex snap-x cursor-grab gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [touch-action:pan-y] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
+        role="region"
+        aria-label={typeof title === 'string' ? title : 'Carrusel'}
+        tabIndex={0}
+        className="flex snap-x snap-mandatory scroll-px-4 cursor-grab gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [touch-action:pan-y] active:cursor-grabbing [&::-webkit-scrollbar]:hidden"
         onPointerDown={(e) => {
           const el = ref.current;
           if (!el || (e.target as HTMLElement).closest('button,a')) return;
@@ -76,6 +79,7 @@ function DragRow({ children, title }: { children: ReactNode; title?: ReactNode }
       >
         {children}
       </div>
+      <p aria-hidden className="mt-1 text-xs text-ink-muted sm:hidden">Deslizá para ver más →</p>
     </div>
   );
 }
@@ -165,7 +169,7 @@ function CrestImg({ club }: { club: Club }) {
       </span>
     );
   }
-  return <img src={src} alt={`Escudo de ${club.name}`} className="h-8 w-8 shrink-0 object-contain" loading="lazy" />;
+  return <img src={src} alt={`Escudo de ${club.name}`} className="h-8 w-8 shrink-0 object-contain" loading="lazy" decoding="async" width={32} height={32} />;
 }
 
 function UpcomingClashCard({ clash }: { clash: UpcomingClash }) {  return (
@@ -227,12 +231,17 @@ const competitions = [
   },
 ];
 
-function usePageMeta() {
-  usePageTitle('CSD Soler — Club Social y Deportivo Soler');
+function usePageMetaHome() {
+  usePageMeta({
+    title: 'CSD Soler — Club Social y Deportivo Soler',
+    description:
+      'Club Social y Deportivo Soler: fixture por fechas, próximos partidos, resultados oficiales, posiciones y Soler TV. Fútbol femenino y juveniles de Malvinas Argentinas.',
+    path: '/',
+  });
 }
 
 export function HomePage() {
-  usePageMeta();
+  usePageMetaHome();
   const upcoming = useUpcoming();
   const live = useLiveBroadcast();
   const tournamentsQ = useTournaments();
@@ -248,26 +257,29 @@ export function HomePage() {
           className="absolute inset-0 h-full w-full object-cover"
           loading="eager"
           fetchPriority="high"
+          decoding="async"
+          width={1600}
+          height={900}
         />
         <div
           aria-hidden
           className="absolute inset-0 bg-gradient-to-r from-black/75 via-black/45 to-black/15"
         />
-        <Container className="relative py-16 md:py-24">
+        <Container className="relative py-12 sm:py-16 md:py-24">
           <p className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-[13px] font-semibold tracking-wide">
             <Trophy size={14} aria-hidden /> Malvinas Argentinas · Fútbol femenino y juveniles
           </p>
-          <h1 className="mt-4 max-w-2xl font-display text-5xl font-extrabold uppercase leading-[0.95] md:text-7xl">
+          <h1 className="mt-4 max-w-2xl font-display text-4xl font-extrabold uppercase leading-[0.95] sm:text-5xl md:text-7xl">
             Más que un club, un lugar para compartir en familia.
           </h1>
           <p className="mt-4 max-w-xl text-base text-white/80 md:text-lg">
             Viví toda la actividad deportiva del Club Social y Deportivo Soler.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
-            <Link to="/fixture" className="inline-flex h-12 items-center rounded-card bg-primary px-6 font-bold text-white hover:bg-primary-hover">
+          <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+            <Link to="/fixture" className="inline-flex h-12 w-full items-center justify-center rounded-card bg-primary px-6 font-bold text-white hover:bg-primary-hover sm:w-auto">
               Ver próximos partidos
             </Link>
-            <Link to="/el-club" className="inline-flex h-12 items-center rounded-card border border-white/30 px-6 font-bold text-white hover:bg-white/10">
+            <Link to="/el-club" className="inline-flex h-12 w-full items-center justify-center rounded-card border border-white/30 px-6 font-bold text-white hover:bg-white/10 sm:w-auto">
               Conocer el club
             </Link>
           </div>
@@ -356,7 +368,7 @@ export function HomePage() {
               <h2 className="mt-1 font-display text-4xl font-extrabold uppercase">Viví los partidos en directo</h2>
               <p className="mt-2 max-w-xl text-white/70">Solo mostramos transmisiones habilitadas con estado verificado. Sin señal confirmada, sin botón EN VIVO.</p>
             </div>
-            <Link to="/soler-tv" className="inline-flex h-12 items-center rounded-card bg-primary px-6 font-bold text-white hover:bg-primary-hover">
+            <Link to="/soler-tv" className="inline-flex h-12 w-full items-center justify-center rounded-card bg-primary px-6 font-bold text-white hover:bg-primary-hover sm:w-auto">
               Ir a Soler TV
             </Link>
           </div>

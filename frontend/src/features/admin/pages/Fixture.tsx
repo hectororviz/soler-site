@@ -300,11 +300,11 @@ function ClashEditor({ clash, onSave, onWhole, onRemove }: {
   return (
     <article className="rounded-card border border-line p-3">
       <div className="flex flex-wrap items-center gap-2 font-semibold">
-        {clash.homeClub.crestPath && <img src={resolveCrest(clash.homeClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" />}
+        {clash.homeClub.crestPath && <img src={resolveCrest(clash.homeClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" width={28} height={28} />}
         {clash.homeClub.shortName}
         <span className="text-ink-muted">vs</span>
         {clash.awayClub.shortName}
-        {clash.awayClub.crestPath && <img src={resolveCrest(clash.awayClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" />}
+        {clash.awayClub.crestPath && <img src={resolveCrest(clash.awayClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" width={28} height={28} />}
         <span className="ml-auto inline-flex items-center gap-2">
           <button onClick={() => setOpen((v) => !v)} className="text-sm font-semibold text-primary hover:underline">
             {open ? 'Ocultar categorías' : `Ver categorías (${clash.categories.length})`}

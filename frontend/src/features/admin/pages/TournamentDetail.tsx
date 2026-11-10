@@ -87,7 +87,7 @@ export function TournamentDetailPage() {
               <li key={p.id} className="flex items-center justify-between gap-2 py-2">
                 <span className="flex items-center gap-2">
                   {p.club.crestPath ? (
-                    <img src={resolveCrest(p.club.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" loading="lazy" />
+                    <img src={resolveCrest(p.club.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" loading="lazy" decoding="async" width={28} height={28} />
                   ) : null}
                   <span className="font-medium">{p.club.name}</span>
                   <span className="text-[13px] text-ink-muted">

@@ -1,11 +1,13 @@
 import { Link, useParams } from 'react-router-dom';
 import { Container } from '../components/layout/Container';
 import { EmptyState, SectionHeading } from '../components/ui/feedback';
+import { usePageMeta } from '../lib/usePageTitle';
 
-function Shell({ title, desc, to }: { title: string; desc: string; to?: string }) {
+function Shell({ title, desc, to, path }: { title: string; desc: string; to?: string; path?: string }) {
+  usePageMeta({ title: `${title} — CSD Soler`, description: desc, path: path ?? '/soler-tv' });
   return (
     <Container className="py-10">
-      <SectionHeading title={title} description={desc} />
+      <SectionHeading as="h1" title={title} description={desc} />
       <EmptyState
         title="Sección en construcción sobre esta base"
         hint="La estructura, navegación y sistema de diseño ya están listos. Esta pantalla se completa en la siguiente fase con su API correspondiente."
@@ -34,7 +36,7 @@ export function PosicionesPage() {
   return <Shell title="Posiciones" desc="Tablas completas por categoría con destaque de Soler sin alterar el orden." to="GET /api/v1/standings?torneo=&categoria=" />;
 }
 export function SolerTVPage() {
-  return <Shell title="Soler TV" desc="Transmisiones con estado verificado. Integración desacoplada por adaptador." to="GET /api/v1/broadcasts (estados PROGRAMADA/EN_VIVO/FINALIZADA/INTERRUMPIDA)" />;
+  return <Shell title="Soler TV" desc="Transmisiones con estado verificado del Club Soler. Solo mostramos señal confirmada." to="GET /api/v1/broadcasts (estados PROGRAMADA/EN_VIVO/FINALIZADA/INTERRUMPIDA)" path="/soler-tv" />;
 }
 export function ElClubPage() {
   return <Shell title="El Club" desc="Historia, fundación, autoridades e identidad. Contenido administrable." to="GET /api/v1/content?slot=club" />;
@@ -54,6 +56,12 @@ export function AdminPage() {
   );
 }
 export function NotFoundPage() {
+  usePageMeta({
+    title: 'Página no encontrada — CSD Soler',
+    description: 'La página que buscás no existe. Volvé al inicio del Club Social y Deportivo Soler.',
+    path: '/404',
+    robots: 'noindex,nofollow',
+  });
   return (
     <Container className="py-16 text-center">
       <h1 className="font-display text-5xl font-extrabold uppercase">404</h1>

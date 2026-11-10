@@ -16,7 +16,7 @@ function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, data:
     <li className="flex flex-col gap-2 rounded-card border border-line px-3 py-2">
       <span className="flex items-center gap-3">
         {src ? (
-          <img src={src} alt={`Escudo de ${club.name}`} className="h-9 w-9 object-contain" loading="lazy" />
+          <img src={src} alt={`Escudo de ${club.name}`} className="h-9 w-9 object-contain" loading="lazy" decoding="async" width={36} height={36} />
         ) : (
           <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-pitch font-display text-xs font-bold text-gold">
             {club.shortName.slice(0, 2).toUpperCase()}

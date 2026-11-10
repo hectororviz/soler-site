@@ -15,11 +15,12 @@ export function ClubBadge({
   strong?: boolean;
 }) {
   const box = size === 'lg' ? 'h-14 w-14 text-lg' : size === 'sm' ? 'h-9 w-9 text-xs' : 'h-11 w-11 text-sm';
+  const dims = size === 'lg' ? { width: 56, height: 56 } : size === 'sm' ? { width: 36, height: 36 } : { width: 44, height: 44 };
   const src = clubCrest(club);
   return (
     <span className="inline-flex items-center gap-2">
       {src ? (
-        <img src={src} alt={`Escudo de ${club.name}`} className={cn('object-contain', box)} loading="lazy" />
+        <img src={src} alt={`Escudo de ${club.name}`} className={cn('object-contain', box)} loading="lazy" decoding="async" width={dims.width} height={dims.height} />
       ) : (
         <span
           aria-hidden

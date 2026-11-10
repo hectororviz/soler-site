@@ -57,7 +57,7 @@ function SlotEditor({ slot }: { slot: string }) {
               <textarea className={`${inputCls} h-28 py-2`} value={body} onChange={(e) => setBody(e.target.value)} />
             </Field>
             <Field label="Imagen (opcional)">
-              {imagePath && <img src={resolveCrest(imagePath) ?? ''} alt="" className="mb-2 h-20 object-contain" />}
+              {imagePath && <img src={resolveCrest(imagePath) ?? ''} alt="" className="mb-2 h-20 w-auto object-contain" width={160} height={80} loading="lazy" decoding="async" />}
               <input
                 type="file"
                 accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -103,7 +103,7 @@ function SponsorRow({ sponsor, onLogo, onSave, onToggle, onRemove }: {
   return (
     <li className="flex flex-wrap items-center justify-between gap-2 py-2.5">
       <span className="flex min-w-0 items-center gap-2">
-        {logo ? <img src={logo} alt={sponsor.name} className="h-8 object-contain" /> : null}
+        {logo ? <img src={logo} alt={sponsor.name} className="h-8 w-auto object-contain" width={64} height={32} loading="lazy" decoding="async" /> : null}
         {editing ? (
           <span className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
             <input className={inputCls} value={name} onChange={(e) => setName(e.target.value)} placeholder="Nombre" />

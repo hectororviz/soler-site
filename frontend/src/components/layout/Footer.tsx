@@ -36,7 +36,7 @@ export function Footer() {
           </nav>
           <div>
             <p className="text-sm font-bold uppercase text-ink-muted">Transmisiones</p>
-            <a href={STREAMING_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block text-[15px] font-semibold text-primary hover:underline">
+            <a href={STREAMING_URL} target="_blank" rel="noopener noreferrer" className="mt-3 inline-block min-h-[44px] py-2 text-[15px] font-semibold text-primary hover:underline">
               streaming.csdsoler.com.ar
             </a>
             <p className="mt-2 text-sm text-ink-muted">Las transmisiones se habilitan solo cuando hay señal verificada.</p>

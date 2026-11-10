@@ -10,7 +10,7 @@ import { cn } from '../../lib/utils';
 import type { FixtureClash, FixtureRound } from '../../types';
 import { ApiError } from '../../types';
 import { useCategories, useFixtureFilters, useFixtureRounds, useRoundSelection, useTournaments } from './useFixture';
-import { usePageTitle } from '../../lib/usePageTitle';
+import { usePageMeta } from '../../lib/usePageTitle';
 
 function ShareButton() {
   const [copied, setCopied] = useState(false);
@@ -71,12 +71,20 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
           ) : null}
         </span>
       </div>
+      <p className="mt-2 text-[13px] text-ink-muted sm:hidden">
+        {formatKickoff(firstKickoff)}
+        {venue ? ` · ${venue}` : null}
+      </p>
     </article>
   );
 }
 
 export function FixturePage() {
-  usePageTitle('Fixture — CSD Soler');
+  usePageMeta({
+    title: 'Fixture — CSD Soler',
+    description: 'Todas las fechas y cruces del torneo: Juveniles Domingos, Sábados y Fútbol Femenino. Horarios, sedes y categorías del Club Soler.',
+    path: '/fixture',
+  });
   const [filters, setFilters] = useFixtureFilters();
   const tournamentsQ = useTournaments();
   const tournaments = tournamentsQ.data ?? [];
@@ -106,6 +114,7 @@ export function FixturePage() {
   return (
     <Container className="py-10">
       <SectionHeading
+        as="h1"
         title="Fixture"
         description="Todas las fechas y cruces del torneo, no solo los partidos de Soler. Los horarios y sedes pueden variar por categoría."
         link={<ShareButton />}

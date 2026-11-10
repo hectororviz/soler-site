@@ -4,13 +4,17 @@ import { useQuery } from '@tanstack/react-query';
 import { Container } from '../../components/layout/Container';
 import { EmptyState, SectionHeading, Skeleton } from '../../components/ui/feedback';
 import { api, resolveCrest } from '../../services/api';
-import { usePageTitle } from '../../lib/usePageTitle';
+import { usePageMeta } from '../../lib/usePageTitle';
 
 interface Slot { slot: string; title: string | null; body: string | null; imagePath: string | null }
 interface Sponsor { id: string; name: string; logoUrl: string | null; logoPath?: string | null; href: string | null }
 
 export function ContactoPage() {
-  usePageTitle('Contacto — CSD Soler');
+  usePageMeta({
+    title: 'Contacto — CSD Soler',
+    description: 'Datos institucionales y sponsors del Club Social y Deportivo Soler. Contacto oficial del club.',
+    path: '/contacto',
+  });
   const slotQ = useQuery({
     queryKey: ['content-contacto'],
     queryFn: () => api.get<Slot | null>('/content?slot=contacto'),
@@ -24,7 +28,7 @@ export function ContactoPage() {
   const sponsors = sponsorsQ.data ?? [];
   return (
     <Container className="py-10">
-      <SectionHeading title={slotQ.data?.title || 'Contacto'} description="Datos institucionales y sponsors." />
+      <SectionHeading as="h1" title={slotQ.data?.title || 'Contacto'} description="Datos institucionales y sponsors." />
       {slotQ.isPending ? (
         <div className="mt-6"><Skeleton className="h-40" /></div>
       ) : slotQ.data?.body ? (
@@ -40,7 +44,7 @@ export function ContactoPage() {
               const logo = s.logoUrl ?? (s.logoPath ? resolveCrest(s.logoPath) : null);
               const inner = (
                 <span className="flex items-center gap-3 rounded-card border border-line bg-white p-4 shadow-soft">
-                  {logo ? <img src={logo} alt={s.name} className="h-12 object-contain" loading="lazy" /> : null}
+                  {logo ? <img src={logo} alt={s.name} className="h-12 w-auto object-contain" loading="lazy" decoding="async" width={96} height={48} /> : null}
                   <span className="font-semibold">{s.name}</span>
                 </span>
               );
