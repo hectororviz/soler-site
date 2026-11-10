@@ -61,6 +61,7 @@ function AlbumPanel({ album, onChanged }: { album: GalleryAlbum; onChanged: () =
   const [order, setOrder] = useState(String(album.order));
   const [files, setFiles] = useState<FileList | null>(null);
   const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const w = useAdminWrite(onChanged);
 
   const saveAlbum = () => {
@@ -73,6 +74,13 @@ function AlbumPanel({ album, onChanged }: { album: GalleryAlbum; onChanged: () =
 
   const upload = () => {
     if (!files?.length) return;
+    const MAX = 12 * 1024 * 1024;
+    const tooBig = Array.from(files).find((f) => f.size > MAX);
+    if (tooBig) {
+      setUploadError(`"${tooBig.name}" supera los 12 MB. Achicá la foto e intentá de nuevo.`);
+      return;
+    }
+    setUploadError(null);
     setUploading(true);
     (async () => {
       try {
@@ -143,7 +151,9 @@ function AlbumPanel({ album, onChanged }: { album: GalleryAlbum; onChanged: () =
                 {uploading ? 'Subiendo…' : 'Subir'}
               </button>
             </span>
+            <span className="text-xs text-ink-muted">PNG, JPG o WebP de hasta 12 MB por foto.</span>
           </Field>
+          {uploadError && <p className="mt-1 text-sm font-semibold text-red-700">{uploadError}</p>}
           <ul className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {album.images.map((g) => (
               <PhotoRow

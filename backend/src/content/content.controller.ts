@@ -117,7 +117,7 @@ export class AdminContentController {
         }
         cb(null, true);
       },
-      limits: { fileSize: 4 * 1024 * 1024 },
+      limits: { fileSize: 12 * 1024 * 1024 },
     }),
   )
   uploadFile(@UploadedFile() file?: Express.Multer.File) {
