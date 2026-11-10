@@ -95,4 +95,15 @@ export interface GalleryImage {
   caption: string | null;
   order: number;
   active: boolean;
+  albumId: string | null;
+}
+
+export interface GalleryAlbum {
+  id: string;
+  title: string;
+  body: string | null;
+  coverImageId: string | null;
+  order: number;
+  active: boolean;
+  images: GalleryImage[];
 }

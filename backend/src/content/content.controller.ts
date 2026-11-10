@@ -26,6 +26,25 @@ class GalleryDto {
   @IsString() imagePath!: string;
   @IsOptional() @IsString() caption?: string;
   @IsOptional() @IsInt() order?: number;
+  @IsOptional() @IsString() albumId?: string;
+}
+class GalleryPatchDto {
+  @IsOptional() @IsString() caption?: string | null;
+  @IsOptional() @IsInt() order?: number;
+  @IsOptional() @IsBoolean() active?: boolean;
+  @IsOptional() @IsString() albumId?: string | null;
+}
+class GalleryAlbumDto {
+  @IsString() title!: string;
+  @IsOptional() @IsString() body?: string;
+  @IsOptional() @IsInt() order?: number;
+}
+class GalleryAlbumPatchDto {
+  @IsOptional() @IsString() title?: string;
+  @IsOptional() @IsString() body?: string | null;
+  @IsOptional() @IsString() coverImageId?: string | null;
+  @IsOptional() @IsInt() order?: number;
+  @IsOptional() @IsBoolean() active?: boolean;
 }
 
 @Controller()
@@ -44,7 +63,7 @@ export class ContentController {
 
   @Get('gallery')
   gallery() {
-    return this.content.gallery();
+    return this.content.galleryPublic();
   }
 }
 
@@ -116,13 +135,30 @@ export class AdminContentController {
     return this.content.createGalleryImage(dto);
   }
   @Patch('gallery/:id')
-  updateGallery(@Param('id') id: string, @Body() dto: Partial<GalleryDto & { active: boolean }>) {
-    const { imagePath, ...data } = dto;
+  updateGallery(@Param('id') id: string, @Body() dto: GalleryPatchDto) {
+    const { imagePath, ...data } = dto as GalleryPatchDto & { imagePath?: string };
     void imagePath;
     return this.content.updateGalleryImage(id, data);
   }
   @Delete('gallery/:id')
   removeGallery(@Param('id') id: string) {
     return this.content.deleteGalleryImage(id);
+  }
+
+  @Get('gallery/albums')
+  allGalleryAlbums() {
+    return this.content.allGalleryAlbums();
+  }
+  @Post('gallery/albums')
+  createGalleryAlbum(@Body() dto: GalleryAlbumDto) {
+    return this.content.createGalleryAlbum(dto);
+  }
+  @Patch('gallery/albums/:id')
+  updateGalleryAlbum(@Param('id') id: string, @Body() dto: GalleryAlbumPatchDto) {
+    return this.content.updateGalleryAlbum(id, dto);
+  }
+  @Delete('gallery/albums/:id')
+  removeGalleryAlbum(@Param('id') id: string) {
+    return this.content.deleteGalleryAlbum(id);
   }
 }

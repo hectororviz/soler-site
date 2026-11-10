@@ -180,4 +180,21 @@ model GalleryImage {
   order     Int      @default(0)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())
+
+  albumId String?
+  album   GalleryAlbum? @relation(fields: [albumId], references: [id], onDelete: SetNull)
+
+  @@index([albumId])
+}
+
+model GalleryAlbum {
+  id           String   @id @default(cuid())
+  title        String
+  body         String?
+  coverImageId String?
+  order        Int      @default(0)
+  active       Boolean  @default(true)
+  createdAt    DateTime @default(now())
+
+  images GalleryImage[]
 }
