@@ -83,6 +83,8 @@ export function AlbumLightbox({
             src={src}
             alt={photo.caption ?? title}
             className="max-h-[62vh] w-auto max-w-full rounded-card object-contain"
+            width={1200}
+            height={800}
           />
         )}
         {total > 1 && (
