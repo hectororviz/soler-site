@@ -68,10 +68,12 @@ for (const p of ['features/results/ResultsPage.tsx', 'features/standings/Standin
   ok(existsSync(join(root, '..', 'public', 'robots.txt')), 'public/robots.txt existe');
   ok(existsSync(join(root, '..', 'public', 'sitemap.xml')), 'public/sitemap.xml existe');
 }
-// Router con code-splitting.
+// Router con code-splitting (lazy+Suspense viven en app/lazy.tsx).
 {
-  const src = readFileSync(join(root, 'app', 'router.tsx'), 'utf8');
-  ok(/lazy\(/.test(src) && /Suspense/.test(src), 'router usa lazy+Suspense (code-splitting)');
+  const router = readFileSync(join(root, 'app', 'router.tsx'), 'utf8');
+  const lazy = readFileSync(join(root, 'app', 'lazy.tsx'), 'utf8');
+  ok(/lazyPage/.test(router) && /susp\(/.test(router), 'router usa lazyPage+susp (code-splitting)');
+  ok(/lazy\(/.test(lazy) && /Suspense/.test(lazy), 'app/lazy.tsx implementa lazy+Suspense');
 }
 
 if (errors.length) {
