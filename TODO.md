@@ -5,7 +5,8 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 ## Hecho
 
 - [x] **Base frontend**: React+Vite+TS+Tailwind+shadcn-style, tokens (`--color-primary #B8202D`…),
-  fuentes Barlow Condensed + Inter, layout 1280px, header responsive con drawer (Escape/foco/bloqueo scroll), footer.
+  fuentes Barlow Condensed + Inter, layout 1280px, header responsive con drawer (Escape/foco/bloqueo scroll),
+  diálogo móvil fuera del header `sticky` con `backdrop-blur` (el filtro crea containing block y colapsaba el `fixed`), footer.
 - [x] **Componentes**: Button/Card/Skeleton/Empty/Error/SectionHeading + deportivos
   (ClubBadge, MatchCard, ScoreDisplay, StatusBadge, LiveIndicator, BroadcastCard, StandingsTable).
 - [x] **Home completa** (§4.1): hero + vivo condicional + próximos + resultados + competiciones +
@@ -17,8 +18,10 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
   (inscripción obligatoria, anti-duplicados, generación auto por categorías, publicar),
   broadcasts con estados, content + sponsors, healthcheck, estáticos `/files/`.
 - [x] **Seed real**: temporada 2026, 3 torneos + categorías (§2.1), 72 clubes del CSV con escudos, Soler inscripto.
-- [x] **Fixture público funcional** contra API real: filtros torneo/categoría en URL, navegación
-  de fechas, expansión por categoría, destaque Soler, compartir enlace, default al torneo con datos.
+- [x] **Fixture público funcional** contra API real: filtro torneo en URL (sin filtro
+  categoría: todas las categorías comparten rival en el cruce), navegación
+  de fechas, destaque Soler, compartir enlace, default al torneo con datos.
+  Cada cruce muestra fecha/hora + sede + icono "Cómo llegar" (`mapsUrl` del club local).
 - [x] **Infra**: `Dockerfile` backend/frontend, `docker-compose.yml` local,
   `docker-compose.prod.yml` (red externa `caddy_net`, labels caddy-docker-proxy),
   CI a GHCR (`.github/workflows/ci.yml`), `docs/DEPLOY.md`.

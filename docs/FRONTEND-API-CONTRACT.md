@@ -27,7 +27,7 @@ Nunca llama a Supabase de Ligas Deportivas ni expone credenciales.
 
 ## Pantallas siguientes y sus dependencias
 
-- `/fixture` → `GET /api/v1/fixtures?torneo=&categoria=&fecha=` + `GET /api/v1/tournaments`, `/categories`, `/matchdays`
+- `/fixture` → `GET /api/v1/tournaments/:slug/fixture` (sin `categoria`: todas las categorías comparten rival en el cruce) + `GET /api/v1/tournaments`; filtro torneo y fecha en URL. Link "Cómo llegar" a `home.mapsUrl` (cancha del local).
 - `/resultados` → `GET /api/v1/results?...` (fuente: Ligas Deportivas normalizada por backend)
 - `/posiciones` → `GET /api/v1/standings?torneo=&categoria=` (orden oficial intacto;
   `categoria=general` suma solo `categories.is_competitive=true`, igual que el sitio oficial —

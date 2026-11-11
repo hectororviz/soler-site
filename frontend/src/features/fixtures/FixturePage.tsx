@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, Link2, Check } from 'lucide-react';
+import { ArrowLeft, ArrowRight, Link2, Check, MapPin } from 'lucide-react';
 import { Container } from '../../components/layout/Container';
 import { Button } from '../../components/ui/Button';
 import { Card, EmptyState, ErrorState, SectionHeading, Skeleton } from '../../components/ui/feedback';
@@ -9,7 +9,7 @@ import { formatKickoff } from '../../lib/format';
 import { cn } from '../../lib/utils';
 import type { FixtureClash, FixtureRound } from '../../types';
 import { ApiError } from '../../types';
-import { useCategories, useFixtureFilters, useFixtureRounds, useRoundSelection, useTournaments } from './useFixture';
+import { useFixtureFilters, useFixtureRounds, useRoundSelection, useTournaments } from './useFixture';
 import { usePageMeta } from '../../lib/usePageTitle';
 
 function ShareButton() {
@@ -47,6 +47,8 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
   const awaySoler = isSoler(clash.away);
   const firstKickoff = clash.categories.find((c) => c.kickoff)?.kickoff ?? null;
   const venue = clash.categories.find((c) => c.venue)?.venue ?? null;
+  const mapsUrl = clash.home.mapsUrl ?? null;
+  const mapsLabel = `Cómo llegar a la cancha de ${clash.home.name}`;
   return (
     <article
       className={cn(
@@ -62,18 +64,42 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
         </span>
         <span className="hidden shrink-0 text-[13px] text-ink-muted sm:block">
           {formatKickoff(firstKickoff)}
-          {venue ? (
-            clash.away.mapsUrl ? (
-              <> · <a href={clash.away.mapsUrl} target="_blank" rel="noreferrer" className="font-semibold text-primary hover:underline">Cómo llegar: {venue}</a></>
-            ) : (
-              ` · ${venue}`
-            )
+          {venue ? ` · ${venue}` : null}
+          {mapsUrl ? (
+            <>
+              {' · '}
+              <a
+                href={mapsUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+                aria-label={mapsLabel}
+                title={mapsLabel}
+              >
+                <MapPin size={14} aria-hidden />
+                Cómo llegar
+              </a>
+            </>
           ) : null}
         </span>
       </div>
-      <p className="mt-2 text-[13px] text-ink-muted sm:hidden">
-        {formatKickoff(firstKickoff)}
-        {venue ? ` · ${venue}` : null}
+      <p className="mt-2 flex flex-wrap items-center gap-x-1 text-[13px] text-ink-muted sm:hidden">
+        <span>{formatKickoff(firstKickoff)}</span>
+        {venue ? <span> · {venue}</span> : null}
+        {mapsUrl ? (
+          <a
+            href={mapsUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 font-semibold text-primary hover:underline"
+            aria-label={mapsLabel}
+            title={mapsLabel}
+          >
+            {' · '}
+            <MapPin size={14} aria-hidden />
+            Cómo llegar
+          </a>
+        ) : null}
       </p>
     </article>
   );
@@ -94,8 +120,7 @@ export function FixturePage() {
     tournaments.find((t) => (t._count?.matchdays ?? 0) > 0)?.slug ?? tournaments[0]?.slug ?? '';
   const activeSlug = filters.torneo || defaultSlug;
   const activeTournament = tournaments.find((t) => t.slug === activeSlug);
-  const categoriesQ = useCategories(activeTournament?.id ?? '');
-  const roundsQ = useFixtureRounds(activeSlug, filters.categoria);
+  const roundsQ = useFixtureRounds(activeSlug);
   const rounds: FixtureRound[] | undefined = roundsQ.data;
   // Por defecto: primera fecha no jugada (no toda FINALIZADO); si están todas jugadas, la última.
   const firstUnplayed = (rounds ?? []).find((r) =>
@@ -131,19 +156,6 @@ export function FixturePage() {
           >
             {tournaments.map((t) => (
               <option key={t.id} value={t.slug}>{t.name}</option>
-            ))}
-          </select>
-        </label>
-        <label className="flex min-w-44 flex-1 flex-col gap-1 text-sm font-semibold">
-          Categoría
-          <select
-            value={filters.categoria}
-            onChange={(e) => setFilters({ categoria: e.target.value })}
-            className="h-11 rounded-card border border-line bg-white px-3 font-normal"
-          >
-            <option value="">Todas</option>
-            {(categoriesQ.data ?? []).map((c) => (
-              <option key={c.id} value={c.slug}>{c.name}</option>
             ))}
           </select>
         </label>

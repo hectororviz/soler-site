@@ -71,6 +71,7 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
   }, [open ]);
 
   return (
+    <>
     <header className="sticky top-0 z-40 border-b border-line bg-white/95 backdrop-blur">
       <Container>
         <div className="flex h-16 items-center justify-between gap-3">
@@ -127,6 +128,7 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
           </div>
         </div>
       </Container>
+    </header>
 
       {open && (
         <div className="fixed inset-0 z-50 lg:hidden" role="dialog" aria-modal="true" aria-label="Menú de navegación">
@@ -170,6 +172,6 @@ export function Header({ liveActive = false }: { liveActive?: boolean }) {
           </div>
         </div>
       )}
-    </header>
+    </>
   );
 }

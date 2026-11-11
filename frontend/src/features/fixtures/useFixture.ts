@@ -78,9 +78,9 @@ export function useCategories(tournamentId: string) {
   });
 }
 
-export function useFixtureRounds(torneoSlug: string, categoria: string) {
+export function useFixtureRounds(torneoSlug: string, categoria?: string) {
   return useQuery({
-    queryKey: ['fixture', torneoSlug, categoria],
+    queryKey: ['fixture', torneoSlug, categoria ?? ''],
     queryFn: () => {
       if (USE_MOCKS) {
         const rounds: FixtureRound[] = [
