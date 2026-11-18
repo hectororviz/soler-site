@@ -16,6 +16,7 @@ import {
   vignette,
   withBlock,
 } from './common';
+import { paintName } from '../sections/names';
 import { paintCrest } from '../sections/crests';
 import { paintSchedule, type ScheduleStyle } from '../sections/schedule';
 
@@ -270,42 +271,33 @@ export function renderMatchdayPro(
     paintCrest(ctx, assets.away, rx + lay.crestGap / 2, yB, Math.round(rB * lay.crestAway), content.awayName, treat, colors, opts.intensity === 'high' ? 0.65 : 0.45);
     vsHero(ctx, cx, Math.round((crestY + yB) / 2), Math.round(crestR * (impact ? 0.52 : 0.48) * lay.vsScale), p, opts.intensity);
     if (asym) {
-      ctx.textAlign = 'left';
-      let s1 = Math.round(crestR * 0.34 * ty.names);
-      ctx.font = `${WT} ${s1}px ${DISPLAY}`;
-      while (s1 > 18 && ctx.measureText(content.homeName.toUpperCase()).width > w - 220) {
-        s1 -= 2;
-        ctx.font = `${WT} ${s1}px ${DISPLAY}`;
-      }
-      ctx.fillStyle = '#fff';
-      ctx.fillText(content.homeName.toUpperCase(), tx, nameY);
-      ctx.fillStyle = p.accent;
-      ctx.font = `700 ${Math.round(crestR * 0.19)}px ${SANS}`;
-      ctx.fillText('LOCAL', tx, nameY + 34);
-      ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      let s2 = Math.round(crestR * 0.28 * ty.names);
-      ctx.font = `${WT} ${s2}px ${DISPLAY}`;
-      while (s2 > 16 && ctx.measureText(content.awayName.toUpperCase()).width > w - 220) {
-        s2 -= 2;
-        ctx.font = `${WT} ${s2}px ${DISPLAY}`;
-      }
-      ctx.fillText(content.awayName.toUpperCase(), tx, nameY + 34 + 56);
+      const nx = tx + lay.nameDx;
+      const ny = nameY + lay.nameDy;
+      const tagGap = lay.nameTagGap;
+      const tagSize = (base: number) => Math.round(base * ty.tag);
+      const s1 = paintName(ctx, content.homeName, nx, ny, w - 220, Math.min(crestR * 0.34 * ty.names, 48), '#fff', 'left', ty, p.accent);
+      const awayY = ny + Math.round(s1 * 0.75) + tagGap + 44;
+      const s2 = paintName(ctx, content.awayName, nx, awayY, w - 220, Math.min(crestR * 0.28 * ty.names, 38), 'rgba(255,255,255,0.85)', 'left', ty, p.accent);
       if (show.homeAway) {
+        ctx.fillStyle = p.accent;
+        ctx.font = `700 ${tagSize(Math.round(crestR * 0.19))}px ${SANS}`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText('LOCAL', nx, ny + Math.round(s1 * 0.75) + tagGap);
         ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = `700 ${Math.round(crestR * 0.19)}px ${SANS}`;
-        ctx.fillText('VISITANTE', tx, nameY + 34 + 56 + 30);
+        ctx.fillText('VISITANTE', nx, awayY + Math.round(s2 * 0.8) + 8 + tagGap);
       }
     } else {
-      fitCenter(ctx, content.homeName.toUpperCase(), lx, nameY, 400, Math.round(crestR * 0.34 * ty.names), DISPLAY, WT, '#ffffff');
-      fitCenter(ctx, content.awayName.toUpperCase(), rx, nameY, 400, Math.round(crestR * 0.34 * ty.names), DISPLAY, WT, '#ffffff');
+      paintName(ctx, content.homeName, lx + lay.nameDx, nameY + lay.nameDy, 400, crestR * 0.34 * ty.names, '#ffffff', 'center', ty, p.accent);
+      paintName(ctx, content.awayName, rx + lay.nameDx, nameY + lay.nameDy, 400, crestR * 0.34 * ty.names, '#ffffff', 'center', ty, p.accent);
     }
     if (show.homeAway && !asym) {
-      ctx.font = `700 ${Math.round(crestR * 0.19)}px ${SANS}`;
+      ctx.font = `700 ${Math.round(crestR * 0.19 * ty.tag)}px ${SANS}`;
       ctx.textAlign = 'center';
       ctx.fillStyle = p.accent;
-      ctx.fillText('LOCAL', lx, tagY);
+      ctx.fillText('LOCAL', lx + lay.nameDx, tagY + lay.nameDy + lay.nameTagGap);
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.fillText('VISITANTE', rx, tagY);
+      ctx.fillText('VISITANTE', rx + lay.nameDx, tagY + lay.nameDy + lay.nameTagGap);
     }
   };
 

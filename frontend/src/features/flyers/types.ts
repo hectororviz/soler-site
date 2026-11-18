@@ -61,6 +61,11 @@ export interface LayoutTuning {
   matchupScale: number;
   matchupDx: number;
   matchupDy: number;
+  /** Offset del nombre respecto a su posición base (independiente del escudo). */
+  nameDx: number;
+  nameDy: number;
+  /** Espacio extra entre nombre y condición local/visitante. */
+  nameTagGap: number;
   vsScale: number;
   scheduleScale: number;
   scheduleDy: number;
@@ -80,10 +85,18 @@ export interface TypographyTuning {
   names: number;
   category: number;
   time: number;
+  /** Condición local/visitante */
+  tag: number;
   weight: 600 | 700 | 800;
   /** Tracking px para titulares */
   tracking: number;
   align: 'auto' | 'center' | 'left';
+  /** Contorno del nombre del equipo */
+  nameStroke: boolean;
+  nameStrokeColor: string;
+  nameStrokeWidth: number;
+  nameShadow: boolean;
+  nameGlow: boolean;
 }
 
 export interface FlyerShow {
@@ -175,6 +188,9 @@ export function defaultOptions(): FlyerOptions {
       matchupScale: 1,
       matchupDx: 0,
       matchupDy: 0,
+      nameDx: 0,
+      nameDy: 0,
+      nameTagGap: 0,
       vsScale: 1,
       scheduleScale: 1,
       scheduleDy: 0,
@@ -191,9 +207,15 @@ export function defaultOptions(): FlyerOptions {
       names: 1,
       category: 1,
       time: 1,
+      tag: 1,
       weight: 800,
       tracking: 0,
       align: 'auto',
+      nameStroke: false,
+      nameStrokeColor: '#000000',
+      nameStrokeWidth: 6,
+      nameShadow: true,
+      nameGlow: false,
     },
     density: 'balanced',
   };

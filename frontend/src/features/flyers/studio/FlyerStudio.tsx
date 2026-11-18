@@ -154,6 +154,10 @@ function loadPrefs(): Partial<FlyerOptions> {
       const base: TypographyTuning = { ...d.typography, ...clean };
       if (t.weight === 600 || t.weight === 700 || t.weight === 800) base.weight = t.weight;
       if (t.align === 'auto' || t.align === 'center' || t.align === 'left') base.align = t.align;
+      if (typeof t.nameStroke === 'boolean') base.nameStroke = t.nameStroke;
+      if (typeof t.nameStrokeColor === 'string' && /^#[0-9a-fA-F]{6}$/.test(t.nameStrokeColor)) base.nameStrokeColor = t.nameStrokeColor;
+      if (typeof t.nameShadow === 'boolean') base.nameShadow = t.nameShadow;
+      if (typeof t.nameGlow === 'boolean') base.nameGlow = t.nameGlow;
       out.typography = base;
     }
     return out;
@@ -887,12 +891,15 @@ export function FlyerStudio() {
               </fieldset>
               <fieldset>
                 <legend className="mb-1 flex w-full items-center justify-between text-xs font-bold uppercase text-ink-muted">
-                  Enfrentamiento <GroupReset onClick={() => resetLayout(['crestHome', 'crestAway', 'crestGap', 'matchupScale', 'matchupDx', 'matchupDy', 'vsScale'])} />
+                  Enfrentamiento <GroupReset onClick={() => resetLayout(['crestHome', 'crestAway', 'crestGap', 'matchupScale', 'matchupDx', 'matchupDy', 'vsScale', 'nameDx', 'nameDy', 'nameTagGap'])} />
                 </legend>
                 <div className="grid gap-x-6 gap-y-3 sm:grid-cols-2">
                   <Slider label="Escudo local" min={0.7} max={1.4} step={0.05} value={L.crestHome} unit="%" onChange={(v) => patchLayout({ crestHome: v })} />
                   <Slider label="Escudo visitante" min={0.7} max={1.4} step={0.05} value={L.crestAway} unit="%" onChange={(v) => patchLayout({ crestAway: v })} />
                   <Slider label="Tamaño escudos" min={0.7} max={1.4} step={0.05} value={L.crestScale} unit="%" onChange={(v) => patchLayout({ crestScale: v })} />
+              <Slider label="Posición nombre X" min={-120} max={120} step={4} value={L.nameDx} unit="px" onChange={(v) => patchLayout({ nameDx: v })} />
+              <Slider label="Posición nombre Y" min={-120} max={120} step={4} value={L.nameDy} unit="px" onChange={(v) => patchLayout({ nameDy: v })} />
+              <Slider label="Separación nombre↔condición" min={-40} max={80} step={2} value={L.nameTagGap} unit="px" onChange={(v) => patchLayout({ nameTagGap: v })} />
                   <Slider label="Separación escudos" min={-100} max={100} step={4} value={L.crestGap} unit="px" onChange={(v) => patchLayout({ crestGap: v })} />
                   <Slider label="Escala partido" min={0.8} max={1.3} step={0.05} value={L.matchupScale} unit="%" onChange={(v) => patchLayout({ matchupScale: v })} />
                   <Slider label="Tamaño VS" min={0.7} max={1.5} step={0.05} value={L.vsScale} unit="%" onChange={(v) => patchLayout({ vsScale: v })} />
@@ -939,8 +946,36 @@ export function FlyerStudio() {
               <Slider label="Texto de fecha" min={0.8} max={1.4} step={0.05} value={T.dateText} unit="%" onChange={(v) => patchType({ dateText: v })} />
               <Slider label="Categorías" min={0.8} max={1.4} step={0.05} value={T.category} unit="%" onChange={(v) => patchType({ category: v })} />
               <Slider label="Horarios" min={0.8} max={1.4} step={0.05} value={T.time} unit="%" onChange={(v) => patchType({ time: v })} />
+              <Slider label="Local/visitante" min={0.8} max={1.4} step={0.05} value={T.tag} unit="%" onChange={(v) => patchType({ tag: v })} />
               <Slider label="Espaciado letras" min={0} max={8} step={1} value={T.tracking} unit="raw" onChange={(v) => patchType({ tracking: Math.round(v) })} />
             </div>
+            <fieldset className="mt-3 rounded-card border border-line p-3">
+              <legend className="px-1 text-xs font-bold uppercase text-ink-muted">Contorno del nombre</legend>
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" checked={T.nameStroke} onChange={(e) => patchType({ nameStroke: e.target.checked })} className="h-5 w-5 accent-[#B8202D]" />
+                  Contorno
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" checked={T.nameShadow} onChange={(e) => patchType({ nameShadow: e.target.checked })} className="h-5 w-5 accent-[#B8202D]" />
+                  Sombra suave
+                </label>
+                <label className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                  <input type="checkbox" checked={T.nameGlow} onChange={(e) => patchType({ nameGlow: e.target.checked })} className="h-5 w-5 accent-[#B8202D]" />
+                  Glow sutil
+                </label>
+              </div>
+              {T.nameStroke && (
+                <div className="mt-3 grid gap-x-6 gap-y-3 sm:grid-cols-2">
+                  <label className="flex items-center gap-2 text-sm font-semibold">
+                    Color contorno
+                    <input type="color" value={T.nameStrokeColor} onChange={(e) => patchType({ nameStrokeColor: e.target.value })} className="h-11 w-14 cursor-pointer rounded-card border border-line bg-white" aria-label="Color del contorno" />
+                    <code className="text-xs font-normal text-ink-muted">{T.nameStrokeColor}</code>
+                  </label>
+                  <Slider label="Grosor contorno" min={2} max={14} step={1} value={T.nameStrokeWidth} unit="raw" onChange={(v) => patchType({ nameStrokeWidth: Math.round(v) })} />
+                </div>
+              )}
+            </fieldset>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               <div>
                 <p className="mb-1 text-xs font-bold uppercase text-ink-muted">Peso</p>

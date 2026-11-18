@@ -16,6 +16,7 @@ import {
   unspaced,
   withBlock,
 } from './common';
+import { paintName } from '../sections/names';
 import { paintCrest } from '../sections/crests';
 import { paintSchedule, type ScheduleStyle } from '../sections/schedule';
 
@@ -189,7 +190,7 @@ export function renderMinimalPremium(
         ctx.fillText(content.daySubtitle, tx, y);
       } else {
         const anchor = left ? tx + (w - 220) / 2 : w / 2;
-        fitCenter(ctx, content.dayTitle, anchor, y, w - 160, Math.round(titleBase * 0.52), DISPLAY, 800, p.primary);
+        fitCenter(ctx, content.dayTitle, anchor, y, w - 160, Math.round(titleBase * 0.52), DISPLAY, WT, p.primary);
         if (opts.dateStyle === 'both') {
           ctx.fillStyle = ink;
           ctx.globalAlpha = 0.7;
@@ -222,51 +223,44 @@ export function renderMinimalPremium(
     ctx.fillRect(vsx + 60, cy - 1, Math.max(10, rx - r * crestScale - 20 - (vsx + 60)), 2);
     ctx.globalAlpha = 1;
     const drawNames = (ny: number) => {
+      const nx = tx + lay.nameDx;
+      const by = ny + lay.nameDy;
+      const tagGap = lay.nameTagGap;
+      const tagSize = (base: number) => Math.round(base * ty.tag);
       if (asym) {
-        ctx.textAlign = 'left';
-        ctx.fillStyle = ink;
-        let s1 = Math.round(r * 0.36 * ty.names);
-        ctx.font = `${WT} ${s1}px ${DISPLAY}`;
-        while (s1 > 16 && ctx.measureText(content.homeName.toUpperCase()).width > w - 220) {
-          s1 -= 2;
-          ctx.font = `${WT} ${s1}px ${DISPLAY}`;
-        }
-        ctx.fillText(content.homeName.toUpperCase(), tx, ny);
+        const s1 = paintName(ctx, content.homeName, nx, by, w - 220, Math.min(r * 0.36 * ty.names, 46), ink, 'left', ty, null);
         if (show.homeAway) {
           ctx.fillStyle = p.primary;
-          ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
-          ctx.fillText('LOCAL', tx, ny + 32);
+          ctx.font = `700 ${tagSize(Math.round(r * 0.2))}px ${SANS}`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('LOCAL', nx, by + Math.round(s1 * 0.75) + tagGap);
         }
-        ctx.fillStyle = ink;
+        const awayY = by + Math.round(s1 * 0.75) + tagGap + 44;
         ctx.globalAlpha = 0.75;
-        let s2 = Math.round(r * 0.3 * ty.names);
-        ctx.font = `${WT} ${s2}px ${DISPLAY}`;
-        while (s2 > 14 && ctx.measureText(content.awayName.toUpperCase()).width > w - 220) {
-          s2 -= 2;
-          ctx.font = `${WT} ${s2}px ${DISPLAY}`;
-        }
-        ctx.fillText(content.awayName.toUpperCase(), tx, ny + 32 + 52);
+        const s2 = paintName(ctx, content.awayName, nx, awayY, w - 220, Math.min(r * 0.3 * ty.names, 36), ink, 'left', ty, null);
         ctx.globalAlpha = 1;
         if (show.homeAway) {
           ctx.fillStyle = ink;
           ctx.globalAlpha = 0.55;
-          ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
-          ctx.fillText('VISITANTE', tx, ny + 32 + 52 + 28);
+          ctx.font = `700 ${tagSize(Math.round(r * 0.2))}px ${SANS}`;
+          ctx.textAlign = 'left';
+          ctx.fillText('VISITANTE', nx, awayY + Math.round(s2 * 0.8) + 8 + tagGap);
           ctx.globalAlpha = 1;
         }
       } else {
-        fitCenter(ctx, content.homeName.toUpperCase(), lx, ny, 400, Math.round(r * 0.36 * ty.names), DISPLAY, WT, ink);
-        fitCenter(ctx, content.awayName.toUpperCase(), rx, ny, 400, Math.round(r * 0.36 * ty.names), DISPLAY, WT, ink);
+        paintName(ctx, content.homeName, lx + lay.nameDx, by, 400, r * 0.36 * ty.names, ink, 'center', ty, null);
+        paintName(ctx, content.awayName, rx + lay.nameDx, by, 400, r * 0.36 * ty.names, ink, 'center', ty, null);
       }
     };
     drawNames(nameY);
     if (show.homeAway && !asym) {
       ctx.fillStyle = ink;
       ctx.globalAlpha = 0.55;
-      ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
+      ctx.font = `700 ${Math.round(r * 0.2 * ty.tag)}px ${SANS}`;
       ctx.textAlign = 'center';
-      ctx.fillText('LOCAL', lx, nameY + 34);
-      ctx.fillText('VISITANTE', rx, nameY + 34);
+      ctx.fillText('LOCAL', lx + lay.nameDx, nameY + lay.nameDy + 34 + lay.nameTagGap);
+      ctx.fillText('VISITANTE', rx + lay.nameDx, nameY + lay.nameDy + 34 + lay.nameTagGap);
       ctx.globalAlpha = 1;
     }
     return { lx, rx };

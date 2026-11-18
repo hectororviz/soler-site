@@ -16,6 +16,7 @@ import {
   vignette,
   withBlock,
 } from './common';
+import { paintName } from '../sections/names';
 import { paintCrest } from '../sections/crests';
 import { paintSchedule, type ScheduleStyle } from '../sections/schedule';
 
@@ -297,45 +298,42 @@ export function renderSocialBold(
     const vsR = Math.round(L.crestR * (opts.composition === 'impact' ? 0.5 : 0.46) * lay.vsScale);
     burst(ctx, cx, (crestScaleY + L.awayY) / 2, vsR, p.accent, opts.intensity);
     const drawNames = () => {
-      ctx.textAlign = tAlign;
-      const maxW = left ? w - 180 : 340;
+      const nx = tx + lay.nameDx;
+      const ny = L.nameY + lay.nameDy;
+      const tagGap = lay.nameTagGap;
+      const tagSize = (base: number) => Math.round(base * ty.tag);
       if (asym) {
-        let s1 = Math.round(L.nameBase * ty.names);
-        ctx.font = `${WT} ${s1}px ${DISPLAY}`;
-        while (s1 > 18 && ctx.measureText(content.homeName.toUpperCase()).width > maxW) {
-          s1 -= 2;
-          ctx.font = `${WT} ${s1}px ${DISPLAY}`;
+        const maxW = w - 180;
+        const s1 = paintName(ctx, content.homeName, nx, ny, maxW, Math.min(L.nameBase * ty.names, 48), '#fff', 'left', ty, p.accent);
+        if (show.homeAway) {
+          ctx.fillStyle = p.accent;
+          ctx.font = `800 ${tagSize(Math.round(L.nameBase * 0.45))}px ${SANS}`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('LOCAL', nx, ny + Math.round(s1 * 0.75) + tagGap);
         }
-        ctx.fillStyle = '#fff';
-        ctx.textAlign = 'left';
-        ctx.fillText(content.homeName.toUpperCase(), tx, L.nameY);
-        ctx.fillStyle = p.accent;
-        ctx.font = `800 ${Math.round(L.nameBase * 0.45)}px ${SANS}`;
-        ctx.fillText('LOCAL', tx, L.nameY + 34);
-        let s2 = Math.round(L.nameBase * 0.8 * ty.names);
-        ctx.font = `${WT} ${s2}px ${DISPLAY}`;
-        while (s2 > 16 && ctx.measureText(content.awayName.toUpperCase()).width > maxW) {
-          s2 -= 2;
-          ctx.font = `${WT} ${s2}px ${DISPLAY}`;
+        const awayY = ny + Math.round(s1 * 0.75) + tagGap + 44;
+        const s2 = paintName(ctx, content.awayName, nx, awayY, maxW, Math.min(L.nameBase * 0.8 * ty.names, 38), 'rgba(255,255,255,0.85)', 'left', ty, p.accent);
+        if (show.homeAway) {
+          ctx.fillStyle = 'rgba(255,255,255,0.6)';
+          ctx.font = `800 ${tagSize(Math.round(L.nameBase * 0.45))}px ${SANS}`;
+          ctx.textAlign = 'left';
+          ctx.textBaseline = 'alphabetic';
+          ctx.fillText('VISITANTE', nx, awayY + Math.round(s2 * 0.8) + 8 + tagGap);
         }
-        ctx.fillStyle = 'rgba(255,255,255,0.85)';
-        ctx.fillText(content.awayName.toUpperCase(), tx, L.nameY + 34 + 56);
-        ctx.fillStyle = 'rgba(255,255,255,0.6)';
-        ctx.font = `800 ${Math.round(L.nameBase * 0.45)}px ${SANS}`;
-        ctx.fillText('VISITANTE', tx, L.nameY + 34 + 56 + 30);
       } else {
-        fitCenter(ctx, content.homeName.toUpperCase(), L.crestLX, L.nameY, 340, Math.round(L.nameBase * ty.names), DISPLAY, WT, '#ffffff');
-        fitCenter(ctx, content.awayName.toUpperCase(), L.crestRX, L.nameY, 340, Math.round(L.nameBase * ty.names), DISPLAY, WT, '#ffffff');
+        paintName(ctx, content.homeName, L.crestLX + lay.nameDx, ny, 340, L.nameBase * ty.names, '#ffffff', 'center', ty, p.accent);
+        paintName(ctx, content.awayName, L.crestRX + lay.nameDx, ny, 340, L.nameBase * ty.names, '#ffffff', 'center', ty, p.accent);
       }
     };
     skewIt(L.nameY, drawNames);
     if (show.homeAway && !asym) {
       ctx.fillStyle = p.accent;
-      ctx.font = `800 ${Math.round(L.nameBase * 0.5)}px ${SANS}`;
+      ctx.font = `800 ${Math.round(L.nameBase * 0.5 * ty.tag)}px ${SANS}`;
       ctx.textAlign = 'center';
-      ctx.fillText('LOCAL', L.crestLX, L.tagY);
+      ctx.fillText('LOCAL', L.crestLX + lay.nameDx, L.tagY + lay.nameDy + lay.nameTagGap);
       ctx.fillStyle = 'rgba(255,255,255,0.6)';
-      ctx.fillText('VISITANTE', L.crestRX, L.tagY);
+      ctx.fillText('VISITANTE', L.crestRX + lay.nameDx, L.tagY + lay.nameDy + lay.nameTagGap);
     }
     if (show.venue && content.venue && venueY !== null) {
       const label = content.venue.toUpperCase().slice(0, 44);

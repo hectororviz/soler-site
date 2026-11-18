@@ -33,6 +33,9 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
   defecto (bare) + Círculo opcional, horarios compactos (lista/2 col de una línea con
   filetes, cascada auto compacta en story), renombrar torneos (PATCH admin sin tocar
   slug + UI inline).
+- [x] **Generador de flyers v7**: nombres con contorno/sombra/glow configurables
+  (auto-contraste claro/oscuro) y posición independiente del escudo (X/Y + separación
+  a condición), ritmo vertical proporcional en pilas asimétricas.
 
 ## Pendiente (en orden)
 

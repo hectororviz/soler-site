@@ -74,6 +74,8 @@ export function FlyerLab() {
               crest: 'circle',
               schedule: t.id === 'editorial-clean' ? 'compact' : t.id === 'matchday-stadium' ? 'compact2' : 'table',
               intensity: 'high',
+              typography: { ...defaultOptions().typography, nameStroke: true, nameGlow: true },
+              layout: { ...defaultOptions().layout, nameDx: 12, nameDy: -10 },
               show: { tournament: true, round: true, day: true, venue: true, homeAway: true, slogan: true, web: true },
             },
             content: stress,

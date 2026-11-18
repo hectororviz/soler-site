@@ -141,6 +141,8 @@ test('estudio de flyers en modo demo genera PNG', async ({ page }) => {
   await page.getByRole('checkbox', { name: /torneo/i }).uncheck();
   await page.locator('summary', { hasText: 'Escudos' }).click();
   await page.getByRole('checkbox', { name: /quitar fondo blanco/i }).check();
+  await page.locator('summary', { hasText: 'Tipografía' }).click();
+  await page.getByRole('checkbox', { name: /^contorno$/i }).check();
   await page.getByLabel('Tamaño escudos').evaluate((el, v) => {
     const input = el as HTMLInputElement;
     input.value = String(v);
