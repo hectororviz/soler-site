@@ -11,7 +11,10 @@ import {
   drawPin,
   fitCenter,
   grain,
+  spaced,
+  unspaced,
   vignette,
+  withBlock,
 } from './common';
 import { paintCrest } from '../sections/crests';
 import { paintSchedule, type ScheduleStyle } from '../sections/schedule';
@@ -24,8 +27,8 @@ export const MATCHDAY_PRO_DEFAULTS: Palette = {
 };
 
 export interface StadiumAssets {
-  home: HTMLImageElement | null;
-  away: HTMLImageElement | null;
+  home: HTMLImageElement | HTMLCanvasElement | null;
+  away: HTMLImageElement | HTMLCanvasElement | null;
   bg: HTMLImageElement | null;
 }
 
@@ -95,18 +98,6 @@ function stadiumBg(
   vignette(ctx, w, h, intensity === 'low' ? 0.32 : 0.58);
 }
 
-function watermarkOutline(ctx: CanvasRenderingContext2D, w: number, y: number, text: string, size: number) {
-  ctx.save();
-  ctx.globalAlpha = 0.07;
-  ctx.strokeStyle = '#ffffff';
-  ctx.lineWidth = 2;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.font = `800 ${size}px ${DISPLAY}`;
-  ctx.strokeText(text.toUpperCase(), w / 2, y);
-  ctx.restore();
-}
-
 /** VS protagonista: doble anillo luminoso sobre medallón oscuro. */
 function vsHero(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number, p: Palette, intensity: FlyerOptions['intensity']) {
   ctx.save();
@@ -157,11 +148,13 @@ export function renderMatchdayPro(
   palette: Palette,
   assets: StadiumAssets,
 ) {
+  let hidden = 0;
   const { w, h } = FORMATS[opts.format];
   const p = { ...MATCHDAY_PRO_DEFAULTS, ...palette };
   const show = opts.show;
   const cx = w / 2;
-  const left = opts.composition === 'asymmetric';
+  const ty0 = opts.typography;
+  const left = opts.composition === 'asymmetric' || ty0.align === 'left';
   const tx = left ? 110 : cx;
   /** En cuadrado la asimétrica solo alinea header/schedule; el duelo va centrado. */
   const asym = left && opts.format !== 'square';
@@ -174,28 +167,33 @@ export function renderMatchdayPro(
   ctx.fillRect(0, 0, w, 10);
 
   const header = (eyebrowY: number, titleY: number, titleBase: number, pillY: number, dayY: number, subY: number, venueY: number) => {
+    const py = pillY + lay.dateDy;
+    const dy = dayY + lay.dateDy;
+    const sy = subY + lay.dateDy;
     ctx.textAlign = left ? 'left' : 'center';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.font = `600 ${opts.format === 'square' ? 25 : 29}px ${SANS}`;
+    if (ty.tracking > 0) spaced(ctx, ty.tracking);
     ctx.fillText('CLUB SOCIAL Y DEPORTIVO SOLER', tx, eyebrowY);
+    unspaced(ctx);
     if (show.tournament) {
       if (left) {
-        let s = Math.round(titleBase * cs);
-        ctx.font = `800 ${s}px ${DISPLAY}`;
+        let s = Math.round(titleBase * cs * ty.title);
+        ctx.font = `${WT} ${s}px ${DISPLAY}`;
         while (s > 20 && ctx.measureText(content.tournamentName.toUpperCase()).width > w - 220) {
           s -= 2;
-          ctx.font = `800 ${s}px ${DISPLAY}`;
+          ctx.font = `${WT} ${s}px ${DISPLAY}`;
         }
         ctx.fillStyle = '#fff';
         ctx.textAlign = 'left';
         ctx.fillText(content.tournamentName.toUpperCase(), tx, titleY);
       } else {
-        fitCenter(ctx, content.tournamentName.toUpperCase(), cx, titleY, w - 140, Math.round(titleBase * cs), DISPLAY, 800, '#ffffff');
+        fitCenter(ctx, content.tournamentName.toUpperCase(), cx, titleY, w - 140, Math.round(titleBase * cs * ty.title), DISPLAY, WT, '#ffffff');
       }
     }
     if (show.round) {
       const t = content.roundLabel.toUpperCase();
-      ctx.font = `800 ${Math.round(titleBase * 0.48)}px ${DISPLAY}`;
+      ctx.font = `${WT} ${Math.round(titleBase * 0.48 * ty.dateNum)}px ${DISPLAY}`;
       const pw = Math.min(w - 220, ctx.measureText(t).width + 100);
       const ph = Math.round(titleBase * 0.78);
       const px = left ? tx : cx - pw / 2;
@@ -204,41 +202,41 @@ export function renderMatchdayPro(
       ctx.shadowBlur = opts.intensity === 'low' ? 0 : 24;
       ctx.fillStyle = p.primary;
       ctx.beginPath();
-      ctx.roundRect(px, pillY, pw, ph, ph / 2);
+      ctx.roundRect(px, py, pw, ph, ph / 2);
       ctx.fill();
       ctx.restore();
       ctx.fillStyle = '#fff';
       ctx.textAlign = 'center';
-      ctx.fillText(t, left ? px + pw / 2 : cx, pillY + ph * 0.7);
+      ctx.fillText(t, left ? px + pw / 2 : cx, py + ph * 0.7);
     }
     if (show.day) {
       ctx.textAlign = left ? 'left' : 'center';
       if (opts.dateStyle === 'short') {
         ctx.fillStyle = p.accent;
-        ctx.font = `800 ${Math.round(titleBase * 0.56)}px ${DISPLAY}`;
-        ctx.fillText(content.daySubtitle, tx, dayY);
+        ctx.font = `${WT} ${Math.round(titleBase * 0.56 * ty.dateText)}px ${DISPLAY}`;
+        ctx.fillText(content.daySubtitle, tx, dy);
       } else if (left) {
-        let s = Math.round(titleBase * 0.56);
-        ctx.font = `800 ${s}px ${DISPLAY}`;
+        let s = Math.round(titleBase * 0.56 * ty.dateText);
+        ctx.font = `${WT} ${s}px ${DISPLAY}`;
         while (s > 20 && ctx.measureText(content.dayTitle).width > w - 220) {
           s -= 2;
-          ctx.font = `800 ${s}px ${DISPLAY}`;
+          ctx.font = `${WT} ${s}px ${DISPLAY}`;
         }
         ctx.fillStyle = p.accent;
         ctx.textAlign = 'left';
-        ctx.fillText(content.dayTitle, tx, dayY);
+        ctx.fillText(content.dayTitle, tx, dy);
         if (opts.dateStyle === 'both') {
           ctx.fillStyle = 'rgba(255,255,255,0.88)';
           ctx.font = `500 ${Math.round(titleBase * 0.3)}px ${SANS}`;
-          ctx.fillText(content.daySubtitle, tx, subY);
+          ctx.fillText(content.daySubtitle, tx, sy);
         }
       } else {
         const anchor = left ? tx + (w - 220) / 2 : cx;
-        fitCenter(ctx, content.dayTitle, anchor, dayY, w - 150, Math.round(titleBase * 0.56), DISPLAY, 800, p.accent);
+        fitCenter(ctx, content.dayTitle, anchor, dy, w - 150, Math.round(titleBase * 0.56 * ty.dateText), DISPLAY, WT, p.accent);
         if (opts.dateStyle === 'both') {
           ctx.fillStyle = 'rgba(255,255,255,0.88)';
           ctx.font = `500 ${Math.round(titleBase * 0.3)}px ${SANS}`;
-          ctx.fillText(content.daySubtitle, tx, subY);
+          ctx.fillText(content.daySubtitle, tx, sy);
         }
       }
     }
@@ -268,19 +266,16 @@ export function renderMatchdayPro(
     const rA = Math.round(crestR * cs * (asym ? 1.08 : 1));
     const rB = Math.round(crestR * cs * (asym ? 0.85 : 1));
     const yB = crestY + (asym ? Math.round(crestR * 0.25) : 0);
-    if (opts.format === 'story') {
-      watermarkOutline(ctx, w, crestY, content.roundLabel, Math.round(crestR * 1.4));
-    }
-    paintCrest(ctx, assets.home, lx, crestY, rA, content.homeName, treat, colors, opts.intensity === 'high' ? 0.75 : 0.5);
-    paintCrest(ctx, assets.away, rx, yB, rB, content.awayName, treat, colors, opts.intensity === 'high' ? 0.65 : 0.45);
-    vsHero(ctx, cx, Math.round((crestY + yB) / 2), Math.round(crestR * (impact ? 0.52 : 0.44)), p, opts.intensity);
+    paintCrest(ctx, assets.home, lx - lay.crestGap / 2, crestY, Math.round(rA * lay.crestHome), content.homeName, treat, colors, opts.intensity === 'high' ? 0.75 : 0.5);
+    paintCrest(ctx, assets.away, rx + lay.crestGap / 2, yB, Math.round(rB * lay.crestAway), content.awayName, treat, colors, opts.intensity === 'high' ? 0.65 : 0.45);
+    vsHero(ctx, cx, Math.round((crestY + yB) / 2), Math.round(crestR * (impact ? 0.52 : 0.48) * lay.vsScale), p, opts.intensity);
     if (asym) {
       ctx.textAlign = 'left';
-      let s1 = Math.round(crestR * 0.34);
-      ctx.font = `800 ${s1}px ${DISPLAY}`;
+      let s1 = Math.round(crestR * 0.34 * ty.names);
+      ctx.font = `${WT} ${s1}px ${DISPLAY}`;
       while (s1 > 18 && ctx.measureText(content.homeName.toUpperCase()).width > w - 220) {
         s1 -= 2;
-        ctx.font = `800 ${s1}px ${DISPLAY}`;
+        ctx.font = `${WT} ${s1}px ${DISPLAY}`;
       }
       ctx.fillStyle = '#fff';
       ctx.fillText(content.homeName.toUpperCase(), tx, nameY);
@@ -288,11 +283,11 @@ export function renderMatchdayPro(
       ctx.font = `700 ${Math.round(crestR * 0.19)}px ${SANS}`;
       ctx.fillText('LOCAL', tx, nameY + 34);
       ctx.fillStyle = 'rgba(255,255,255,0.85)';
-      let s2 = Math.round(crestR * 0.28);
-      ctx.font = `800 ${s2}px ${DISPLAY}`;
+      let s2 = Math.round(crestR * 0.28 * ty.names);
+      ctx.font = `${WT} ${s2}px ${DISPLAY}`;
       while (s2 > 16 && ctx.measureText(content.awayName.toUpperCase()).width > w - 220) {
         s2 -= 2;
-        ctx.font = `800 ${s2}px ${DISPLAY}`;
+        ctx.font = `${WT} ${s2}px ${DISPLAY}`;
       }
       ctx.fillText(content.awayName.toUpperCase(), tx, nameY + 34 + 56);
       if (show.homeAway) {
@@ -301,8 +296,8 @@ export function renderMatchdayPro(
         ctx.fillText('VISITANTE', tx, nameY + 34 + 56 + 30);
       }
     } else {
-      fitCenter(ctx, content.homeName.toUpperCase(), lx, nameY, 400, Math.round(crestR * 0.34), DISPLAY, 800, '#ffffff');
-      fitCenter(ctx, content.awayName.toUpperCase(), rx, nameY, 400, Math.round(crestR * 0.34), DISPLAY, 800, '#ffffff');
+      fitCenter(ctx, content.homeName.toUpperCase(), lx, nameY, 400, Math.round(crestR * 0.34 * ty.names), DISPLAY, WT, '#ffffff');
+      fitCenter(ctx, content.awayName.toUpperCase(), rx, nameY, 400, Math.round(crestR * 0.34 * ty.names), DISPLAY, WT, '#ffffff');
     }
     if (show.homeAway && !asym) {
       ctx.font = `700 ${Math.round(crestR * 0.19)}px ${SANS}`;
@@ -316,12 +311,26 @@ export function renderMatchdayPro(
 
   /** En asimétrica los nombres se apilan: se baja el bloque de horarios. */
   const stackGap = asym ? 96 : 0;
+  const lay = opts.layout;
+  const ty = opts.typography;
+  const WT = ty.weight;
+  const dens = opts.density;
+  const spread = dens === 'compact' ? -16 : dens === 'airy' ? 16 : 0;
+  const schedMin = Math.round(58 * (dens === 'compact' ? 0.88 : dens === 'airy' ? 1.08 : 1));
+  const scheduleTune = () => ({
+    cols: lay.scheduleCols,
+    rowScale: lay.rowScale,
+    catScale: ty.category,
+    timeScale: ty.time,
+  });
 
   const scheduleBlock = (titleY: number, gridY: number, gridEnd: number) => {
     ctx.textAlign = left ? 'left' : 'center';
+    if (ty.tracking > 0) spaced(ctx, ty.tracking);
     ctx.fillStyle = p.accent;
     ctx.font = `800 42px ${DISPLAY}`;
     const hw = ctx.measureText('HORARIOS').width;
+    unspaced(ctx);
     if (left) {
       ctx.textAlign = 'left';
       ctx.fillText('HORARIOS', tx, titleY);
@@ -335,7 +344,7 @@ export function renderMatchdayPro(
       ctx.font = `700 25px ${SANS}`;
       ctx.fillText(`${content.rows.length} CAT.`, cx + 200, titleY - 4);
     }
-    paintSchedule(ctx, opts.schedule, left ? tx : 90, gridY, left ? w - tx - 70 : w - 180, gridEnd - gridY, content.rows, scheduleStyle(p), false, 54);
+    return paintSchedule(ctx, opts.schedule, left ? tx : 90, gridY, left ? w - tx - 70 : w - 180, gridEnd - gridY, content.rows, scheduleStyle(p), false, schedMin, scheduleTune());
   };
 
   const footer = (sloganY: number) => {
@@ -353,15 +362,20 @@ export function renderMatchdayPro(
   };
 
   if (opts.format === 'square') {
-    header(58, 130, 70, 158, 278, 312, 352);
-    matchup(492, 96, 626, 656);
-    scheduleBlock(704 + stackGap, 728 + stackGap, 958);
-    footer(1024);
-    return;
+    withBlock(ctx, cx, 200, lay.headerScale, lay.headerDx, lay.headerDy - lay.separation - spread / 2, () => header(58, 130, 70, 158, 278, 312, 352));
+    withBlock(ctx, cx, 492, lay.matchupScale, lay.matchupDx, lay.matchupDy, () => matchup(492, Math.round(96 * lay.crestScale), 626, 656));
+    withBlock(ctx, cx, 843, lay.scheduleScale, 0, lay.scheduleDy + lay.separation + spread, () => { hidden = scheduleBlock(704 + stackGap, 728 + stackGap, 958).hidden; });
+    withBlock(ctx, cx, 1030, lay.footerScale, 0, lay.footerDy, () => footer(1024));
+    return { hidden };
   }
   const isFeed = opts.format === 'feed';
-  header(isFeed ? 64 : 88, isFeed ? 150 : 208, isFeed ? 84 : 104, isFeed ? 178 : 244, isFeed ? 292 : 408, isFeed ? 330 : 458, isFeed ? 372 : 520);
-  matchup(isFeed ? 566 : 900, isFeed ? 116 : 168, isFeed ? 742 : 1132, isFeed ? 774 : 1174);
-  scheduleBlock((isFeed ? 818 : 1268) + stackGap, (isFeed ? 844 : 1300) + stackGap, isFeed ? 1200 : 1720);
-  footer(isFeed ? 1256 : 1804);
+  const crR = Math.round((isFeed ? 116 : 178) * lay.crestScale);
+  withBlock(ctx, cx, isFeed ? 235 : 300, lay.headerScale, lay.headerDx, lay.headerDy - lay.separation - spread / 2, () =>
+    header(isFeed ? 64 : 88, isFeed ? 150 : 208, isFeed ? 84 : 104, isFeed ? 178 : 244, isFeed ? 292 : 408, isFeed ? 330 : 458, isFeed ? 372 : 520));
+  withBlock(ctx, cx, isFeed ? 566 : 900, lay.matchupScale, lay.matchupDx, lay.matchupDy, () =>
+    matchup(isFeed ? 566 : 890, crR, isFeed ? 742 : 1120, isFeed ? 774 : 1162));
+  withBlock(ctx, cx, isFeed ? 1022 : 1510, lay.scheduleScale, 0, lay.scheduleDy + lay.separation + spread, () =>
+    { hidden = scheduleBlock((isFeed ? 818 : 1230) + stackGap, (isFeed ? 844 : 1258) + stackGap, isFeed ? 1200 : 1720).hidden; });
+  withBlock(ctx, cx, isFeed ? 1280 : 1820, lay.footerScale, 0, lay.footerDy, () => footer(isFeed ? 1256 : 1804));
+  return { hidden };
 }

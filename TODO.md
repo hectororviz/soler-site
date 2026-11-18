@@ -29,15 +29,15 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
   publicar → lectura pública `isSoler:true`; 503 honesto en resultados/posiciones; 401 sin token.
 - [x] **Fix fixture vacío**: API expone `_count.matchdays` publicados; el front defaultea al torneo con datos
   y el empty state sugiere otros torneos.
-- [x] **Generador de flyers deportivos v3** (2da iteración): 3 sistemas visuales distintos
-  (Editorial Clean / Matchday Stadium / Social Bold), secciones configurables
-  (header, duelo, horarios, escudos, fondo), controles en `/admin/flyers`: torneo,
-  fecha (larga/corta/ambas sin duplicar), nº fecha, sede, local/visitante, slogan,
-  web, tratamiento de escudo (sin marco/contorno/glow/placa, sin blanco por defecto),
-  horarios (auto/lista/columnas/tarjetas/tabla con cascada auto), composición
-  (centrada/compacta/asimétrica/impact), intensidad (sobria/media/alta), colores y
-  fondo personalizado. Sin diagonales sobre la info ni textos cortados (lab `/flyer-lab`
-  con matriz 3×3 + variante full por plantilla).
+- [x] **Generador de flyers deportivos v5** (etapa optimización): preview sticky que se
+  adapta al alto (desktop) + mini barra móvil inferior con descarga, quita-fondo con
+  tolerancia configurable + anti-halo + comparativa antes/después (preserva blancos
+  interiores), tratamientos Original/Transparente/Placa/Tarjeta/Recortado,
+  AJUSTAR DISEÑO por grupos colapsables (encabezado/fecha/duelo/horarios/pie) con
+  resets, tipografía (6 tamaños, peso, tracking, alineación), densidad
+  compacto/equilibrado/amplio, columnas forzadas, edición visual por arrastre con
+  guías + doble clic para centrar, presets guardados reutilizables entre partidos,
+  aviso de categorías resumidas. Exportación idéntica al preview (mismo canvas).
 
 ## Pendiente (en orden)
 

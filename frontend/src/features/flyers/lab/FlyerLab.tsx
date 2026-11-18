@@ -6,6 +6,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { FORMATS, TEMPLATES, defaultOptions, type FlyerContent, type FlyerOptions } from '../types';
 import { renderFlyerCanvas } from '../engine';
+import { removeWhiteBackground } from '../sections/crests';
 
 function demoContent(full: boolean): FlyerContent {
   const cats = full
@@ -107,6 +108,34 @@ export function FlyerLab() {
         }
       }
       if (alive) {
+        // Quita-fondo blanco: imagen procedural (fondo blanco + rectángulo
+        // rojo) debe quedar con esquinas transparentes y centro opaco.
+        try {
+          const src = document.createElement('canvas');
+          src.width = 200;
+          src.height = 200;
+          const g2 = src.getContext('2d');
+          if (!g2) throw new Error('sin canvas');
+          g2.fillStyle = '#ffffff';
+          g2.fillRect(0, 0, 200, 200);
+          g2.fillStyle = '#B8202D';
+          g2.fillRect(60, 40, 80, 120);
+          const probe = await new Promise<HTMLImageElement>((res, rej) => {
+            const im = new Image();
+            im.onload = () => res(im);
+            im.onerror = () => rej(new Error('img'));
+            im.src = src.toDataURL('image/png');
+          });
+          const cleaned = removeWhiteBackground(probe, 26);
+          const cg = cleaned.getContext('2d');
+          const corner = cg?.getImageData(2, 2, 1, 1).data[3] ?? 255;
+          const center = cg?.getImageData(100, 100, 1, 1).data ?? [0, 0, 0, 0];
+          const okCrest = corner === 0 && center[3] > 0 && center[0] > 150;
+          out.push({ template: 'crest-remove-white', format: '-', w: cleaned.width, h: cleaned.height, distinct: okCrest ? 99 : 0, ok: okCrest });
+        } catch (e) {
+          console.error('flyer-lab crest', e);
+          out.push({ template: 'crest-remove-white', format: '-', w: 0, h: 0, distinct: 0, ok: false });
+        }
         setResults(out);
         setPhase(out.every((r) => r.ok) ? 'done-ok' : 'done-fail');
         document.title = 'flyer-lab-done';

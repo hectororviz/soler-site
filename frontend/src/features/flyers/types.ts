@@ -42,10 +42,49 @@ export interface Palette {
 }
 
 export type DateStyle = 'long' | 'short' | 'both';
-export type CrestTreatment = 'auto' | 'none' | 'ring' | 'glow' | 'plate';
+export type CrestTreatment = 'auto' | 'original' | 'none' | 'ring' | 'glow' | 'plate' | 'card' | 'crop';
 export type ScheduleVariant = 'auto' | 'list' | 'columns' | 'cards' | 'table';
 export type Composition = 'center' | 'compact' | 'asymmetric' | 'impact';
 export type Intensity = 'low' | 'medium' | 'high';
+export type Density = 'compact' | 'balanced' | 'airy';
+
+export interface LayoutTuning {
+  headerScale: number;
+  headerDx: number;
+  headerDy: number;
+  /** Posición vertical del bloque fecha (pastilla + día). */
+  dateDy: number;
+  crestScale: number;
+  crestHome: number;
+  crestAway: number;
+  crestGap: number;
+  matchupScale: number;
+  matchupDx: number;
+  matchupDy: number;
+  vsScale: number;
+  scheduleScale: number;
+  scheduleDy: number;
+  rowScale: number;
+  /** 0 = auto, 1/2 = forzar columnas en auto/columnas */
+  scheduleCols: number;
+  footerScale: number;
+  footerDy: number;
+  separation: number;
+}
+
+export interface TypographyTuning {
+  /** Multiplicadores 0.8–1.4 */
+  title: number;
+  dateNum: number;
+  dateText: number;
+  names: number;
+  category: number;
+  time: number;
+  weight: 600 | 700 | 800;
+  /** Tracking px para titulares */
+  tracking: number;
+  align: 'auto' | 'center' | 'left';
+}
 
 export interface FlyerShow {
   tournament: boolean;
@@ -64,6 +103,13 @@ export interface FlyerOptions {
   show: FlyerShow;
   /** Fondo personalizado (dataURL). Si es null se usa el fondo de la plantilla. */
   customBg: string | null;
+  /** Quitar fondo blanco automáticamente (fotos/JPG de escudos). */
+  removeWhite: boolean;
+  /** Tolerancia del quita-fondo (10-60). */
+  removeWhiteTol: number;
+  layout: LayoutTuning;
+  typography: TypographyTuning;
+  density: Density;
   /** Formato de fecha. Por defecto solo largo (sin duplicar). */
   dateStyle: DateStyle;
   /** Tratamiento del escudo. `auto` = default de la plantilla. */
@@ -110,11 +156,46 @@ export function defaultOptions(): FlyerOptions {
     palette: {},
     show: { ...DEFAULT_SHOW },
     customBg: null,
+    removeWhite: false,
+    removeWhiteTol: 26,
     dateStyle: 'long',
     crest: 'auto',
     schedule: 'auto',
     composition: 'center',
     intensity: 'medium',
+    layout: {
+      headerScale: 1,
+      headerDx: 0,
+      headerDy: 0,
+      dateDy: 0,
+      crestScale: 1,
+      crestHome: 1,
+      crestAway: 1,
+      crestGap: 0,
+      matchupScale: 1,
+      matchupDx: 0,
+      matchupDy: 0,
+      vsScale: 1,
+      scheduleScale: 1,
+      scheduleDy: 0,
+      rowScale: 1,
+      scheduleCols: 0,
+      footerScale: 1,
+      footerDy: 0,
+      separation: 0,
+    },
+    typography: {
+      title: 1,
+      dateNum: 1,
+      dateText: 1,
+      names: 1,
+      category: 1,
+      time: 1,
+      weight: 800,
+      tracking: 0,
+      align: 'auto',
+    },
+    density: 'balanced',
   };
 }
 

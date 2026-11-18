@@ -95,12 +95,13 @@ test('flyers: matriz plantillas × formatos renderiza y exporta', async ({ page 
   await expect.poll(async () => page.title(), { timeout: 60_000 }).toBe('flyer-lab-done');
   const raw = await page.locator('#flyer-lab-results').textContent();
   const results = JSON.parse(raw ?? '[]') as Array<{ template: string; format: string; w: number; h: number; ok: boolean }>;
-  expect(results).toHaveLength(12);
+  expect(results).toHaveLength(13);
   for (const r of results) {
     expect(r.ok, `${r.template}/${r.format}`).toBe(true);
   }
   const dims: Record<string, [number, number]> = { story: [1080, 1920], feed: [1080, 1350], square: [1080, 1080] };
   for (const r of results) {
+    if (r.format === '-') continue;
     expect([r.w, r.h]).toEqual(dims[r.format]);
   }
 });
@@ -114,12 +115,41 @@ test('estudio de flyers en modo demo genera PNG', async ({ page }) => {
   await expect(page.getByRole('heading', { name: /estudio de flyers/i })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('canvas[aria-label^="Vista previa"]')).toBeVisible();
   await page.getByRole('button', { name: /social bold/i }).click();
+  // La vista previa queda fija mientras se configura (solo desktop).
+  const viewport = page.viewportSize();
+  if (viewport && viewport.width >= 1024) {
+    const stickyHost = page.locator('canvas[aria-label^="Vista previa"]').locator('xpath=ancestor::div[contains(@class,"lg:sticky")][1]');
+    await expect(stickyHost).toHaveCount(1);
+    expect(await stickyHost.evaluate((e) => getComputedStyle(e as HTMLElement).position)).toBe('sticky');
+  }
+  await page.locator('summary', { hasText: 'Fecha' }).click();
   await page.getByRole('button', { name: /ambas/i }).click();
+  await page.locator('summary', { hasText: 'Horarios' }).click();
   await page.getByRole('button', { name: /^tabla$/i }).click();
+  // Edición visual: click selecciona bloque, arrastre lo mueve.
+  const preview = page.locator('canvas[aria-label^="Vista previa"]');
+  await preview.scrollIntoViewIfNeeded();
+  const box = await preview.boundingBox();
+  if (box) {
+    await page.mouse.move(box.x + box.width / 2, box.y + box.height * 0.45);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width / 2 + 20, box.y + box.height * 0.45 + 30, { steps: 4 });
+    await page.mouse.up();
+  }
+  await expect(page.getByText(/bloque seleccionado/i)).toBeVisible({ timeout: 10_000 });
+  await page.locator('summary', { hasText: 'Contenido' }).click();
   await page.getByRole('checkbox', { name: /torneo/i }).uncheck();
+  await page.locator('summary', { hasText: 'Escudos' }).click();
+  await page.getByRole('checkbox', { name: /quitar fondo blanco/i }).check();
+  await page.getByLabel('Tamaño escudos').evaluate((el, v) => {
+    const input = el as HTMLInputElement;
+    input.value = String(v);
+    input.dispatchEvent(new Event('input', { bubbles: true }));
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+  }, '1.3');
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 20_000 }),
-    page.getByRole('button', { name: /descargar png/i }).click(),
+    page.getByRole('button', { name: 'Descargar PNG', exact: true }).click(),
   ]);
   expect(download.suggestedFilename()).toMatch(/social-bold.*\.png$/);
 });

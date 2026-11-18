@@ -125,12 +125,16 @@ function listLayout(
   style: ScheduleStyle,
   skew: boolean,
   minRow: number,
-) {
+  tune: ScheduleTuning = {},
+): { hidden: number } {
   if (!rows.length) {
     emptyMsg(ctx, x, y, w, style, skew);
-    return;
+    return { hidden: 0 };
   }
-  const fit = fitRows(rows, regionH, 100, minRow, true);
+  const rs = tune.rowScale ?? 1;
+  const catK = tune.catScale ?? 1;
+  const timeK = tune.timeScale ?? 1;
+  const fit = fitRows(rows, regionH, 100, minRow * rs, true);
   const list = fit.hidden > 0 ? [...fit.visible, { category: `+${fit.hidden} MÁS`, time: '' }] : fit.visible;
   const rh = fit.rowH;
   const sk = skew ? 14 : 0;
@@ -154,7 +158,7 @@ function listLayout(
       textRow(ctx, row.category, x + w / 2, ry + rh * 0.62, w - 40, Math.round(rh * 0.3), DISPLAY, 800, style.summaryFg, 'center', x + w / 2, cy, skew);
       return;
     }
-    let cs = Math.round(rh * 0.32);
+    let cs = Math.round(rh * 0.32 * catK);
     const maxCat = w - (row.time ? 300 : 60) - sk * 2;
     ctx.font = `700 ${cs}px ${DISPLAY}`;
     while (cs > 12 && ctx.measureText(row.category.toUpperCase()).width > maxCat) {
@@ -172,11 +176,12 @@ function listLayout(
       const pending = row.time === 'A confirmar';
       textRow(
         ctx, row.time, x + w - 26 - sk, cy + rh * 0.15, 260,
-        pending ? Math.round(rh * 0.28) : Math.round(rh * 0.42), DISPLAY, 800,
+        pending ? Math.round(rh * 0.28 * timeK) : Math.round(rh * 0.42 * timeK), DISPLAY, 800,
         pending ? style.timePending : style.timeColor, 'right', x + w / 2, cy, skew,
       );
     }
   });
+  return { hidden: fit.hidden };
 }
 
 function gridLayout(
@@ -192,10 +197,16 @@ function gridLayout(
   maxCell: number,
   cols: number,
   centered: boolean,
-) {
+  tune: ScheduleTuning = {},
+): { hidden: number } {
+  const rsT = tune.rowScale ?? 1;
+  const catT = tune.catScale ?? 1;
+  const timeT = tune.timeScale ?? 1;
+  minCell = minCell * rsT;
+  maxCell = maxCell * rsT;
   if (!rows.length) {
     emptyMsg(ctx, x, y, w, style, skew);
-    return;
+    return { hidden: 0 };
   }
   const gap = 16;
   const cw = (w - gap * (cols - 1)) / cols;
@@ -229,19 +240,19 @@ function gridLayout(
     }
     const cy = gy + ch / 2;
     if (centered) {
-      textRow(ctx, row.category.toUpperCase().slice(0, 18), gx + cw / 2, gy + ch * 0.34, cw - 30, Math.round(ch * 0.26), DISPLAY, 700, style.catColor, 'center', gx + cw / 2, cy, skew);
+      textRow(ctx, row.category.toUpperCase().slice(0, 18), gx + cw / 2, gy + ch * 0.34, cw - 30, Math.round(ch * 0.26 * catT), DISPLAY, 700, style.catColor, 'center', gx + cw / 2, cy, skew);
       const pending = row.time === 'A confirmar';
       textRow(
         ctx, row.time, gx + cw / 2, gy + ch * 0.78, cw - 24,
-        pending ? Math.round(ch * 0.24) : Math.round(ch * 0.4), DISPLAY, 800,
+        pending ? Math.round(ch * 0.24 * timeT) : Math.round(ch * 0.4 * timeT), DISPLAY, 800,
         pending ? style.timePending : style.timeColor, 'center', gx + cw / 2, cy, skew,
       );
     } else {
-      textRow(ctx, row.category.toUpperCase().slice(0, 16), gx + 26 + sk, gy + ch * 0.36, cw - 60, Math.round(ch * 0.28), DISPLAY, 700, style.catColor, 'left', gx + cw / 2, cy, skew);
+      textRow(ctx, row.category.toUpperCase().slice(0, 16), gx + 26 + sk, gy + ch * 0.36, cw - 60, Math.round(ch * 0.28 * catT), DISPLAY, 700, style.catColor, 'left', gx + cw / 2, cy, skew);
       const pending = row.time === 'A confirmar';
       textRow(
         ctx, row.time, gx + 26 + sk, gy + ch * 0.8, cw - 50,
-        pending ? Math.round(ch * 0.26) : Math.round(ch * 0.42), DISPLAY, 800,
+        pending ? Math.round(ch * 0.26 * catT) : Math.round(ch * 0.42 * timeT), DISPLAY, 800,
         pending ? style.timePending : style.timeColor, 'left', gx + cw / 2, cy, skew,
       );
     }
@@ -252,6 +263,7 @@ function gridLayout(
       summaryBar(ctx, x, sy, w, ch - 10, hidden, style, skew);
     }
   }
+  return { hidden };
 }
 
 function tableLayout(
@@ -263,11 +275,15 @@ function tableLayout(
   rows: { category: string; time: string }[],
   style: ScheduleStyle,
   skew: boolean,
-) {
+  tune: ScheduleTuning = {},
+): { hidden: number } {
   if (!rows.length) {
     emptyMsg(ctx, x, y, w, style, skew);
-    return;
+    return { hidden: 0 };
   }
+  const rsT = tune.rowScale ?? 1;
+  const catT = tune.catScale ?? 1;
+  const timeT = tune.timeScale ?? 1;
   const headH = 40;
   const drawHead = () => {
     ctx.textAlign = 'left';
@@ -283,7 +299,7 @@ function tableLayout(
   if (skew) skewedAt(ctx, x + w / 2, y + 20, drawHead);
   else drawHead();
   const bodyY = y + headH;
-  const fit = fitRows(rows, regionH - headH, 64, 40, true);
+  const fit = fitRows(rows, regionH - headH, 64 * rsT, 40 * rsT, true);
   const list = fit.hidden > 0 ? [...fit.visible, { category: `+${fit.hidden} MÁS`, time: '' }] : fit.visible;
   const rh = fit.rowH;
   const sk = skew ? 10 : 0;
@@ -308,14 +324,23 @@ function tableLayout(
       textRow(ctx, row.category, x + w / 2, ry + rh * 0.66, w - 40, Math.round(rh * 0.32), DISPLAY, 800, style.summaryFg, 'center', x + w / 2, ry + rh / 2, skew);
       return;
     }
-    textRow(ctx, row.category.toUpperCase(), x + 16 + sk, ry + rh * 0.62, w - 220, Math.round(rh * 0.34), DISPLAY, 700, style.catColor, 'left', x + w / 2, ry + rh / 2, skew);
+    textRow(ctx, row.category.toUpperCase(), x + 16 + sk, ry + rh * 0.62, w - 220, Math.round(rh * 0.34 * catT), DISPLAY, 700, style.catColor, 'left', x + w / 2, ry + rh / 2, skew);
     const pending = row.time === 'A confirmar';
     textRow(
       ctx, row.time, x + w - 16 - sk, ry + rh * 0.62, 200,
-      pending ? Math.round(rh * 0.3) : Math.round(rh * 0.4), DISPLAY, 800,
+      pending ? Math.round(rh * 0.3 * timeT) : Math.round(rh * 0.4 * timeT), DISPLAY, 800,
       pending ? style.timePending : style.timeColor, 'right', x + w / 2, ry + rh / 2, skew,
     );
   });
+  return { hidden: fit.hidden };
+}
+
+export interface ScheduleTuning {
+  /** 0 = auto, 1/2 = forzar columnas en auto/columnas */
+  cols?: number;
+  rowScale?: number;
+  catScale?: number;
+  timeScale?: number;
 }
 
 export function paintSchedule(
@@ -329,36 +354,35 @@ export function paintSchedule(
   style: ScheduleStyle,
   skew: boolean,
   minRow = 54,
-) {
+  tune: ScheduleTuning = {},
+): { hidden: number } {
   const colsFor = (n: number) => (n > 6 ? 3 : 2);
+  const force = tune.cols === 1 || tune.cols === 2 ? tune.cols : 0;
   switch (variant) {
     case 'list':
-      listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow);
-      break;
+      if (force === 2) return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, 2, false, tune);
+      return listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow, tune);
     case 'columns':
-      gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, 2, false);
-      break;
+      return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, force === 1 ? 1 : 2, false, tune);
     case 'cards':
-      gridLayout(ctx, x, y, w, regionH, rows, style, skew, 76, 118, colsFor(rows.length), true);
-      break;
+      return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 76, 118, force === 1 ? 1 : colsFor(rows.length), true, tune);
     case 'table':
-      tableLayout(ctx, x, y, w, regionH, rows, style, skew);
-      break;
+      return tableLayout(ctx, x, y, w, regionH, rows, style, skew, tune);
     case 'auto': {
       // Cascada: lista completa → columnas completas → denso + resumen.
       const listH = rows.length * minRow;
-      if (rows.length === 0 || listH <= regionH) {
-        listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow);
-      } else {
+      if (force === 1 || rows.length === 0 || listH <= regionH) {
+        if (force === 2) return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, 2, false, tune);
+        return listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow, tune);
+      }
+      {
         const cols = 2;
         const perCol = Math.ceil(rows.length / cols);
         if (perCol * 64 <= regionH) {
-          gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, cols, false);
-        } else {
-          gridLayout(ctx, x, y, w, regionH, rows, style, skew, 58, 92, cols, false);
+          return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, cols, false, tune);
         }
+        return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 58, 92, cols, false, tune);
       }
-      break;
     }
   }
 }
