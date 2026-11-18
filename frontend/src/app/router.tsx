@@ -16,6 +16,8 @@ const GaleriaPage = lazyPage(() => import('../features/gallery/GalleryPage'), 'G
 const ContactoPage = lazyPage(() => import('../features/contact/ContactPage'), 'ContactoPage');
 const SolerTVPage = lazyPage(() => import('../pages/stubs'), 'SolerTVPage');
 const NotFoundPage = lazyPage(() => import('../pages/stubs'), 'NotFoundPage');
+const FlyerLabPage =
+  import.meta.env.DEV === true ? lazyPage(() => import('../features/flyers/lab/FlyerLab'), 'FlyerLab') : null;
 
 const AdminLayout = lazyPage(() => import('../features/admin/AdminLayout'), 'AdminLayout');
 const AdminSection = lazyPage(() => import('../features/admin/AdminLayout'), 'AdminSection');
@@ -33,6 +35,7 @@ const FixtureAdminPage = lazyPage(() => import('../features/admin/pages/Fixture'
 const BroadcastsPage = lazyPage(() => import('../features/admin/pages/Broadcasts'), 'BroadcastsPage');
 const ContentPage = lazyPage(() => import('../features/admin/pages/Content'), 'ContentPage');
 const GalleryAdminPage = lazyPage(() => import('../features/admin/pages/Gallery'), 'GalleryPage');
+const FlyerStudioPage = lazyPage(() => import('../features/flyers/studio/FlyerStudio'), 'FlyerStudio');
 
 export const router = createBrowserRouter([
   {
@@ -48,6 +51,7 @@ export const router = createBrowserRouter([
       { path: '/el-club', element: susp(<ElClubPage />) },
       { path: '/galeria', element: susp(<GaleriaPage />) },
       { path: '/contacto', element: susp(<ContactoPage />) },
+      ...(FlyerLabPage ? [{ path: '/flyer-lab', element: susp(<FlyerLabPage />) }] : []),
       { path: '*', element: susp(<NotFoundPage />) },
     ],
   },
@@ -66,6 +70,7 @@ export const router = createBrowserRouter([
           { path: 'categorias', element: susp(<CategoriesPage />) },
           { path: 'clubes', element: susp(<ClubsPage />) },
           { path: 'fixture', element: susp(<FixtureAdminPage />) },
+          { path: 'flyers', element: susp(<FlyerStudioPage />) },
           { path: 'transmisiones', element: susp(<BroadcastsPage />) },
           { path: 'contenido', element: susp(<ContentPage />) },
           { path: 'galeria', element: susp(<GalleryAdminPage />) },

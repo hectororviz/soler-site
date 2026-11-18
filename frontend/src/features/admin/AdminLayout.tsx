@@ -8,6 +8,7 @@ import { AdminAuthProvider } from './auth';
 const links = [
   { to: '/admin', label: 'Panel', end: true },
   { to: '/admin/fixture', label: 'Fixture' },
+  { to: '/admin/flyers', label: 'Flyers' },
   { to: '/admin/clubes', label: 'Clubes' },
   { to: '/admin/torneos', label: 'Torneos' },
   { to: '/admin/categorias', label: 'Categorías' },

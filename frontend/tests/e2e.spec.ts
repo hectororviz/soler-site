@@ -87,6 +87,41 @@ test('fixture genera flyer de la fecha en 1080x1920', async ({ page }) => {
   expect(path).toBeTruthy();
 });
 
+test('flyers: matriz plantillas × formatos renderiza y exporta', async ({ page }) => {
+  await page.goto('/flyer-lab');
+  // La ruta lab solo existe en dev; si no está (build prod), se omite.
+  await expect(page.locator('h1')).not.toBeEmpty({ timeout: 15_000 });
+  test.skip((await page.locator('#flyer-lab-results').count()) === 0, 'ruta lab solo disponible en dev');
+  await expect.poll(async () => page.title(), { timeout: 60_000 }).toBe('flyer-lab-done');
+  const raw = await page.locator('#flyer-lab-results').textContent();
+  const results = JSON.parse(raw ?? '[]') as Array<{ template: string; format: string; w: number; h: number; ok: boolean }>;
+  expect(results).toHaveLength(9);
+  for (const r of results) {
+    expect(r.ok, `${r.template}/${r.format}`).toBe(true);
+  }
+  const dims: Record<string, [number, number]> = { story: [1080, 1920], feed: [1080, 1350], square: [1080, 1080] };
+  for (const r of results) {
+    expect([r.w, r.h]).toEqual(dims[r.format]);
+  }
+});
+
+test('estudio de flyers en modo demo genera PNG', async ({ page }) => {
+  await page.addInitScript(() => {
+    const b64 = (o: unknown) => btoa(JSON.stringify(o)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    localStorage.setItem('csd-admin-token', `${b64({ alg: 'none' })}.${b64({ exp: 9999999999, sub: 'e2e' })}.x`);
+  });
+  await page.goto('/admin/flyers?demo=1');
+  await expect(page.getByRole('heading', { name: /estudio de flyers/i })).toBeVisible({ timeout: 15_000 });
+  await expect(page.locator('canvas[aria-label^="Vista previa"]')).toBeVisible();
+  await page.getByRole('button', { name: /minimal premium/i }).click();
+  await page.getByRole('button', { name: /cuadrado/i }).click();
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 20_000 }),
+    page.getByRole('button', { name: /descargar png/i }).click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/minimal-premium.*square.*\.png$/);
+});
+
 test('admin no indexa', async ({ page }) => {
   await page.goto('/admin/login');
   await expect(page.getByRole('heading', { name: /administración/i })).toBeVisible();
