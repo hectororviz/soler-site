@@ -162,6 +162,8 @@ export interface FixtureRound {
   label: string;
   order: number;
   published: boolean;
+  /** Día en que se juega la fecha (puede ser null si el admin no lo cargó). */
+  date?: string | null;
   matches: FixtureClash[];
   /** Inscriptos que descansan en esta fecha (torneos impares). */
   libre?: Club[];

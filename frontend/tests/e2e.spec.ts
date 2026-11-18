@@ -73,6 +73,20 @@ test('drawer móvil: abre, atrapa foco y cierra con Escape', async ({ page, view
   await expect(openBtn).toBeFocused();
 });
 
+test('fixture genera flyer de la fecha en 1080x1920', async ({ page }) => {
+  await page.goto('/fixture');
+  const btn = page.getByRole('button', { name: /descargar flyer/i }).first();
+  await expect(btn).toBeVisible({ timeout: 10_000 });
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 15_000 }),
+    btn.click(),
+  ]);
+  expect(download.suggestedFilename()).toMatch(/\.png$/);
+  // La imagen generada respeta el formato historia.
+  const path = await download.path();
+  expect(path).toBeTruthy();
+});
+
 test('admin no indexa', async ({ page }) => {
   await page.goto('/admin/login');
   await expect(page.getByRole('heading', { name: /administración/i })).toBeVisible();

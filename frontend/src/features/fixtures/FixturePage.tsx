@@ -11,6 +11,8 @@ import type { FixtureClash, FixtureRound } from '../../types';
 import { ApiError } from '../../types';
 import { useFixtureFilters, useFixtureRounds, useRoundSelection, useTournaments } from './useFixture';
 import { usePageMeta } from '../../lib/usePageTitle';
+import { flyerFromPublicRound } from './flyer';
+import { FlyerButton } from './FlyerButton';
 
 function ShareButton() {
   const [copied, setCopied] = useState(false);
@@ -40,7 +42,7 @@ function ShareButton() {
   );
 }
 
-function ClashCard({ clash }: { clash: FixtureClash }) {
+function ClashCard({ clash, tournamentName, round }: { clash: FixtureClash; tournamentName: string; round: FixtureRound }) {
   const isSoler = (c: { shortName: string; name: string }) =>
     [c.shortName, c.name].some((v) => v?.toLowerCase().includes('soler'));
   const homeSoler = isSoler(clash.home);
@@ -49,6 +51,8 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
   const venue = clash.categories.find((c) => c.venue)?.venue ?? null;
   const mapsUrl = clash.home.mapsUrl ?? null;
   const mapsLabel = `Cómo llegar a la cancha de ${clash.home.name}`;
+  // Los mocks de dev usan `isSolerMatch`; la API real devuelve `isSoler`.
+  const solerClash = clash.isSoler || (clash as unknown as { isSolerMatch?: boolean }).isSolerMatch === true;
   return (
     <article
       className={cn(
@@ -101,6 +105,11 @@ function ClashCard({ clash }: { clash: FixtureClash }) {
           </a>
         ) : null}
       </p>
+      {solerClash && tournamentName && (
+        <div className="mt-3 border-t border-line pt-3">
+          <FlyerButton data={flyerFromPublicRound(tournamentName, round, clash)} label="Descargar flyer (historia)" />
+        </div>
+      )}
     </article>
   );
 }
@@ -223,7 +232,7 @@ export function FixturePage() {
           </div>
 
           <div className="mt-4 grid gap-3">
-            {round?.matches.map((m) => <ClashCard key={m.id} clash={m} />)}
+            {round?.matches.map((m) => <ClashCard key={m.id} clash={m} tournamentName={activeTournament?.name ?? ''} round={round} />)}
             {(round?.libre ?? []).length > 0 && (
               <p className="rounded-card border border-dashed border-line bg-white px-4 py-3 text-center text-sm text-ink-muted">
                 Libre: <span className="font-semibold text-ink">{(round?.libre ?? []).map((c) => c.shortName).join(', ')}</span>

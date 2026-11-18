@@ -237,7 +237,7 @@ export class FixturesService {
       if (m.awayClubId) playing.add(m.awayClubId);
     }
     const libre = participantClubs.filter((c: any) => !playing.has(c.id)).map(toPublicClub);
-    return { id: matchday.id, label: matchday.label, order: matchday.order, published: matchday.published, matches, libre };
+    return { id: matchday.id, label: matchday.label, order: matchday.order, published: matchday.published, date: (matchday as any).date ?? null, matches, libre };
   }
 
   private matchInclude() {

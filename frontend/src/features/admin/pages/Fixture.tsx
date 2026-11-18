@@ -4,8 +4,9 @@ import { api, resolveCrest } from '../../../services/api';
 import { AdminPage, ConfirmButton, FormError, InlineForm, Field, Panel, inputCls } from '../components';
 import { useAdminList, useAdminWrite } from '../hooks';
 import { formatKickoff } from '../../../lib/format';
-import type { AdminClub, AdminMatchday, AdminTournament, Participant } from '../types';
-import { usePageTitle } from '../../../lib/usePageTitle';
+import { buildFlyerData } from '../../fixtures/flyer';
+import { FlyerButton } from '../../fixtures/FlyerButton';
+import type { AdminClub, AdminMatchday, AdminTournament, Participant } from '../types';import { usePageTitle } from '../../../lib/usePageTitle';
 
 interface DetailCategory {
   id: string;
@@ -221,6 +222,9 @@ export function FixtureAdminPage() {
                     <ClashEditor
                       key={m.id}
                       clash={m}
+                      tournamentName={active?.name ?? ''}
+                      roundLabel={selected.label}
+                      roundDate={selected.date}
                       onSave={saveCategory}
                       onWhole={(status) => setMatchStatus(m.id, status)}
                       onRemove={() => removeMatch(m.id)}
@@ -266,8 +270,11 @@ function DayEditor({ day, onSave }: {
   );
 }
 
-function ClashEditor({ clash, onSave, onWhole, onRemove }: {
+function ClashEditor({ clash, tournamentName, roundLabel, roundDate, onSave, onWhole, onRemove }: {
   clash: DetailClash;
+  tournamentName: string;
+  roundLabel: string;
+  roundDate: string | null;
   onSave: (catId: string, data: { kickoff?: string; venue?: string; status?: string }) => void;
   onWhole: (status: string) => void;
   onRemove: () => void;
@@ -305,7 +312,22 @@ function ClashEditor({ clash, onSave, onWhole, onRemove }: {
         <span className="text-ink-muted">vs</span>
         {clash.awayClub.shortName}
         {clash.awayClub.crestPath && <img src={resolveCrest(clash.awayClub.crestPath) ?? ''} alt="" className="h-7 w-7 object-contain" width={28} height={28} />}
-        <span className="ml-auto inline-flex items-center gap-2">
+        <span className="ml-auto inline-flex flex-wrap items-center gap-2">
+          <FlyerButton
+            data={buildFlyerData({
+              tournamentName,
+              roundLabel,
+              roundDate,
+              home: clash.homeClub,
+              away: clash.awayClub,
+              categories: clash.categories.map((c) => ({
+                categoryName: c.category?.name ?? 'Categoría',
+                kickoff: c.kickoff,
+                venue: c.venue,
+              })),
+            })}
+            label="Flyer"
+          />
           <button onClick={() => setOpen((v) => !v)} className="text-sm font-semibold text-primary hover:underline">
             {open ? 'Ocultar categorías' : `Ver categorías (${clash.categories.length})`}
           </button>
