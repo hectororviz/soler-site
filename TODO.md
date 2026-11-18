@@ -36,6 +36,9 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
 - [x] **Generador de flyers v7**: nombres con contorno/sombra/glow configurables
   (auto-contraste claro/oscuro) y posición independiente del escudo (X/Y + separación
   a condición), ritmo vertical proporcional en pilas asimétricas.
+- [x] **Dirección por club**: campo `address` en Club (migración 0005) editable en
+  Admin → Clubes; el flyer usa sede de la categoría o, si falta, la dirección del
+  local al pie.
 
 ## Pendiente (en orden)
 

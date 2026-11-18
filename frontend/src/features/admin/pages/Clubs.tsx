@@ -7,6 +7,7 @@ import { usePageTitle } from '../../../lib/usePageTitle';
 
 function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, data: Partial<AdminClub>) => void }) {
   const [mapsUrl, setMapsUrl] = useState(club.mapsUrl ?? '');
+  const [address, setAddress] = useState(club.address ?? '');
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(club.name);
   const [shortName, setShortName] = useState(club.shortName);
@@ -49,6 +50,21 @@ function ClubRow({ club, onSave }: { club: AdminClub; onSave: (id: string, data:
       <span className="flex items-center gap-2">
         <input
           className={inputCls}
+          value={address}
+          onChange={(e) => setAddress(e.target.value)}
+          placeholder="Dirección de la cancha (sale al pie del flyer)"
+          aria-label={`Dirección de ${club.name}`}
+        />
+        <button
+          onClick={() => onSave(club.id, { address: address.trim() || null })}
+          className="inline-flex h-11 shrink-0 items-center rounded-card border border-line px-3 text-sm font-semibold hover:border-primary"
+        >
+          Guardar dirección
+        </button>
+      </span>
+      <span className="flex items-center gap-2">
+        <input
+          className={inputCls}
           value={mapsUrl}
           onChange={(e) => setMapsUrl(e.target.value)}
           placeholder="Link de Google Maps de la cancha"
@@ -70,9 +86,10 @@ export function ClubsPage() {
   const [shortName, setShortName] = useState('');
   const [externalId, setExternalId] = useState('');
   const [mapsUrl, setMapsUrl] = useState('');
+  const [address, setAddress] = useState('');
   const [crest, setCrest] = useState<File | null>(null);
   const [pending, setPending] = useState(false);
-  const w = useAdminWrite(() => { setName(''); setShortName(''); setExternalId(''); setMapsUrl(''); setCrest(null); });
+  const w = useAdminWrite(() => { setName(''); setShortName(''); setExternalId(''); setMapsUrl(''); setAddress(''); setCrest(null); });
 
   const create = () => {
     if (!name.trim() || !shortName.trim()) return;
@@ -90,6 +107,7 @@ export function ClubsPage() {
             shortName: shortName.trim(),
             externalId: externalId.trim() || undefined,
             mapsUrl: mapsUrl.trim() || undefined,
+            address: address.trim() || undefined,
             crestPath,
           }, { admin: true }),
           ['admin-clubs'],
@@ -115,6 +133,9 @@ export function ClubsPage() {
           </Field>
           <Field label="Maps (link de Google Maps)">
             <input className={inputCls} value={mapsUrl} onChange={(e) => setMapsUrl(e.target.value)} placeholder="https://maps.google.com/…" />
+          </Field>
+          <Field label="Dirección de la cancha">
+            <input className={inputCls} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Av. Siempre Viva 123, Grand Bourg" />
           </Field>
           <Field label="Escudo (png/jpg/svg/webp ≤2MB)">
             <input

@@ -11,6 +11,8 @@ export interface ContentClubInput {
   shortName: string;
   crestUrl?: string | null;
   crestPath?: string | null;
+  /** Dirección del club (respaldo cuando la categoría no tiene sede). */
+  address?: string | null;
 }
 
 export interface ContentCategoryInput {
@@ -74,6 +76,8 @@ export function buildContent(args: {
     return a.categoryName.localeCompare(b.categoryName, 'es');
   });
   const { title, subtitle } = dayTexts(args.roundDate ?? null, sorted.map((c) => c.kickoff));
+  // Sede: la cargada por categoría manda; si no hay, la dirección del local.
+  const venue = (mainVenue(sorted) ?? args.home.address?.trim()) || null;
   return {
     tournamentName: args.tournamentName,
     roundLabel: args.roundLabel,
@@ -83,7 +87,7 @@ export function buildContent(args: {
     homeCrest: crestOf(args.home),
     awayName: args.away.shortName || args.away.name,
     awayCrest: crestOf(args.away),
-    venue: mainVenue(sorted),
+    venue,
     rows: sorted.map((c) => ({ category: c.categoryName, time: timeShort(c.kickoff) })),
   };
 }
@@ -93,7 +97,7 @@ export function contentFromPublicRound(tournamentName: string, round: FixtureRou
     tournamentName,
     roundLabel: round.label,
     roundDate: round.date ?? null,
-    home: { name: clash.home.name, shortName: clash.home.shortName, crestUrl: clash.home.crestUrl, crestPath: clash.home.crestPath },
+    home: { name: clash.home.name, shortName: clash.home.shortName, crestUrl: clash.home.crestUrl, crestPath: clash.home.crestPath, address: clash.home.address },
     away: { name: clash.away.name, shortName: clash.away.shortName, crestUrl: clash.away.crestUrl, crestPath: clash.away.crestPath },
     categories: clash.categories.map((c) => ({ categoryName: c.categoryName, kickoff: c.kickoff, venue: c.venue })),
   });

@@ -16,6 +16,8 @@ export interface Club {
   crestPath?: string | null;
   /** Link de Google Maps de la cancha. */
   mapsUrl?: string | null;
+  /** Dirección postal de la cancha (la carga el admin por club). */
+  address?: string | null;
   /** ID externo Ligas Deportivas, cuando corresponda. Nunca matchear solo por nombre. */
   externalId?: string | null;
 }

@@ -70,6 +70,8 @@ model Club {
   crestPath  String?
   externalId String?
   mapsUrl    String?
+  // Dirección postal de la cancha (la carga el admin una vez por club).
+  address    String?
   createdAt  DateTime @default(now())
 
   participations TournamentParticipant[]

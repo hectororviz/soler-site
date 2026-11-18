@@ -31,6 +31,7 @@ export interface AdminClub {
   crestPath: string | null;
   externalId: string | null;
   mapsUrl: string | null;
+  address: string | null;
 }
 
 export interface Participant {
