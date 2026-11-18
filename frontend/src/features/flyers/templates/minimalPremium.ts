@@ -1,16 +1,26 @@
 /**
- * Minimal Premium: editorial claro, alto contraste, tipografía protagonista.
- * Papel marfil, tinta negra, un bloque de color institucional y mucho aire.
+ * Editorial Clean: premium claro, marco editorial, tipografía protagonista,
+ * mucho aire. Escudos en placa tono-papel (nunca círculo blanco puro) o
+ * flotantes según tratamiento. Horarios refinados con líderes de puntos.
  */
-import type { FlyerContent, FlyerShow, FormatId, Palette } from '../types';
+import type { FlyerContent, FlyerOptions, Palette } from '../types';
 import { FORMATS } from '../types';
-import { compactGrid, DISPLAY, SANS, drawCrest, drawPin, fitCenter, fitRows, grain, roundRect } from './common';
+import {
+  DISPLAY,
+  SANS,
+  drawPin,
+  fitCenter,
+  grain,
+  roundRect,
+} from './common';
+import { paintCrest } from '../sections/crests';
+import { paintSchedule, type ScheduleStyle } from '../sections/schedule';
 
 export const MINIMAL_PREMIUM_DEFAULTS: Palette = {
   primary: '#B8202D',
   accent: '#B8202D',
   bg: '#F5F2EB',
-  ink: '#141414',
+  ink: '#161616',
 };
 
 export interface MinimalAssets {
@@ -19,13 +29,20 @@ export interface MinimalAssets {
   bg: HTMLImageElement | null;
 }
 
-function paperBg(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette, assets: MinimalAssets) {
+function paperBg(
+  ctx: CanvasRenderingContext2D,
+  w: number,
+  h: number,
+  p: Palette,
+  assets: MinimalAssets,
+  intensity: FlyerOptions['intensity'],
+) {
   ctx.fillStyle = p.bg;
   ctx.fillRect(0, 0, w, h);
   if (assets.bg) {
     try {
       ctx.save();
-      ctx.globalAlpha = 0.14;
+      ctx.globalAlpha = 0.12;
       const img = assets.bg;
       const scale = Math.max(w / img.naturalWidth, h / img.naturalHeight);
       const dw = img.naturalWidth * scale;
@@ -34,7 +51,7 @@ function paperBg(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette
       ctx.restore();
       const wash = ctx.createLinearGradient(0, 0, 0, h);
       wash.addColorStop(0, p.bg);
-      wash.addColorStop(0.35, `${p.bg}CC`);
+      wash.addColorStop(0.4, `${p.bg}CC`);
       wash.addColorStop(1, `${p.bg}F2`);
       ctx.fillStyle = wash;
       ctx.fillRect(0, 0, w, h);
@@ -42,293 +59,285 @@ function paperBg(ctx: CanvasRenderingContext2D, w: number, h: number, p: Palette
       /* papel liso */
     }
   }
-  grain(ctx, w, h, 0.04);
+  if (intensity !== 'low') grain(ctx, w, h, intensity === 'high' ? 0.05 : 0.035);
+  // Marco editorial fino
+  ctx.save();
+  ctx.strokeStyle = p.ink;
+  ctx.globalAlpha = intensity === 'low' ? 0.25 : 0.4;
+  ctx.lineWidth = 3;
+  ctx.strokeRect(26, 26, w - 52, h - 52);
+  ctx.restore();
 }
 
-function rule(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, color: string, lw = 3) {
-  ctx.fillStyle = color;
-  ctx.fillRect(x, y, w, lw);
-}
-
-function eyebrow(
-  ctx: CanvasRenderingContext2D,
-  cx: number,
-  y: number,
-  text: string,
-  ink: string,
-  size: number,
-) {
-  ctx.font = `700 ${size}px ${SANS}`;
-  ctx.textAlign = 'center';
-  const tw = ctx.measureText(text).width;
-  try {
-    (ctx as unknown as { letterSpacing: string }).letterSpacing = '5px';
-  } catch {
-    /* nada */
-  }
-  ctx.fillStyle = ink;
-  ctx.globalAlpha = 0.75;
-  ctx.fillText(text, cx, y);
-  ctx.globalAlpha = 1;
-  try {
-    (ctx as unknown as { letterSpacing: string }).letterSpacing = '0px';
-  } catch {
-    /* nada */
-  }
-  const half = Math.min(300, tw / 2 + 60);
-  rule(ctx, cx - half, y + 18, half * 2, ink, 2);
-  ctx.globalAlpha = 1;
-}
-
-function scheduleEditorial(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  w: number,
-  regionH: number,
-  rows: { category: string; time: string }[],
-  p: Palette,
-  minRowH = 58,
-) {
-  if (rows.length === 0) {
-    ctx.fillStyle = p.ink;
-    ctx.globalAlpha = 0.6;
-    ctx.font = `500 32px ${SANS}`;
-    ctx.textAlign = 'center';
-    ctx.fillText('Horarios a confirmar', x + w / 2, y + 60);
-    ctx.globalAlpha = 1;
-    return;
-  }
-  const fit = fitRows(rows, regionH, 96, minRowH, true);
-  const list = fit.hidden > 0 ? [...fit.visible, { category: `+${fit.hidden} más`, time: '' }] : fit.visible;
-  const rh = fit.rowH;
-  list.forEach((row, i) => {
-    const ry = y + i * rh;
-    if (i > 0) {
-      ctx.globalAlpha = 0.9;
-      rule(ctx, x, ry + 2, w, p.ink, 2);
-      ctx.globalAlpha = 0.14;
-      rule(ctx, x, ry + 2, w, p.ink, 2);
-      ctx.globalAlpha = 1;
-    }
-    ctx.textAlign = 'left';
-    ctx.fillStyle = p.ink;
-    let cs = Math.round(rh * 0.36);
-    ctx.font = `700 ${cs}px ${DISPLAY}`;
-    const maxCat = w - (row.time ? 340 : 60);
-    while (cs > 16 && ctx.measureText(row.category.toUpperCase()).width > maxCat) {
-      cs -= 2;
-      ctx.font = `700 ${cs}px ${DISPLAY}`;
-    }
-    ctx.globalAlpha = row.category.startsWith('+') ? 0.55 : 1;
-    ctx.fillText(row.category.toUpperCase(), x + 4, ry + rh / 2 + cs * 0.34);
-    ctx.globalAlpha = 1;
-    if (row.time) {
-      // Línea de puntos editorial
-      const catW = Math.min(maxCat, ctx.measureText(row.category.toUpperCase()).width);
-      ctx.fillStyle = p.ink;
-      ctx.globalAlpha = 0.3;
-      ctx.font = `700 26px ${SANS}`;
-      const dotsStart = x + 4 + catW + 24;
-      const dotsEnd = x + w - 300;
-      if (dotsEnd > dotsStart) {
-        let dots = '';
-        const n = Math.floor((dotsEnd - dotsStart) / 16);
-        for (let k = 0; k < n; k++) dots += '· ';
-        ctx.textAlign = 'left';
-        ctx.fillText(dots, dotsStart, ry + rh / 2 + 8);
-      }
-      ctx.globalAlpha = 1;
-      ctx.textAlign = 'right';
-      const pending = row.time === 'A confirmar';
-      ctx.fillStyle = pending ? p.ink : p.primary;
-      ctx.globalAlpha = pending ? 0.55 : 1;
-      ctx.font = `800 ${pending ? Math.round(rh * 0.3) : Math.round(rh * 0.44)}px ${DISPLAY}`;
-      ctx.fillText(row.time, x + w - 4, ry + rh / 2 + rh * 0.16);
-      ctx.globalAlpha = 1;
-    }
-  });
+function scheduleStyle(p: Palette): ScheduleStyle {
+  return {
+    rowBg: '#ffffff',
+    rowBgAlt: '#ffffff',
+    catColor: p.ink,
+    timeColor: p.primary,
+    timePending: 'rgba(22,22,22,0.45)',
+    accent: p.primary,
+    summaryBg: p.ink,
+    summaryFg: '#ffffff',
+    leaderDots: true,
+    radius: 10,
+  };
 }
 
 export function renderMinimalPremium(
   ctx: CanvasRenderingContext2D,
   content: FlyerContent,
+  opts: FlyerOptions,
   palette: Palette,
-  format: FormatId,
-  show: FlyerShow,
   assets: MinimalAssets,
 ) {
-  const { w, h } = FORMATS[format];
+  const { w, h } = FORMATS[opts.format];
   const p = { ...MINIMAL_PREMIUM_DEFAULTS, ...palette };
-  const cx = w / 2;
+  const show = opts.show;
   const ink = p.ink;
+  const left = opts.composition === 'asymmetric';
+  const tx = left ? 110 : w / 2;
+  /** En cuadrado la asimétrica solo alinea header/schedule; el duelo va centrado. */
+  const asym = left && opts.format !== 'square';
+  const tAlign: CanvasTextAlign = left ? 'left' : 'center';
+  const compact = opts.composition === 'compact';
+  const impact = opts.composition === 'impact';
+  const crestScale = compact ? 0.82 : impact ? 1.14 : 1;
 
-  paperBg(ctx, w, h, p, assets);
+  paperBg(ctx, w, h, p, assets, opts.intensity);
 
-  // Bloque de color institucional (base o banda según formato)
-  ctx.fillStyle = p.primary;
-  if (format === 'square') {
-    ctx.fillRect(0, 0, w, 26);
-    ctx.fillRect(0, h - 120, w, 120);
-  } else {
-    ctx.fillRect(0, 0, w, 30);
-    ctx.fillRect(0, h - 150, w, 150);
+  // Banda institucional inferior solo si hay pie que mostrar
+  const hasFooter = show.slogan || show.web;
+  if (hasFooter) {
+    ctx.fillStyle = p.primary;
+    ctx.fillRect(0, h - (opts.format === 'square' ? 120 : 150), w, opts.format === 'square' ? 120 : 150);
   }
 
-  if (format === 'square') {
-    eyebrow(ctx, cx, 80, 'CLUB SOCIAL Y DEPORTIVO SOLER', ink, 24);
-    fitCenter(ctx, content.tournamentName.toUpperCase(), cx, 168, w - 110, 80, DISPLAY, 800, ink);
+  const eyebrow = (y: number, size: number) => {
+    ctx.font = `700 ${size}px ${SANS}`;
+    try {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = '5px';
+    } catch {
+      /* nada */
+    }
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.7;
+    ctx.textAlign = tAlign;
+    ctx.fillText('CLUB SOCIAL Y DEPORTIVO SOLER', tx, y);
+    ctx.globalAlpha = 1;
+    try {
+      (ctx as unknown as { letterSpacing: string }).letterSpacing = '0px';
+    } catch {
+      /* nada */
+    }
+    const tw = ctx.measureText('CLUB SOCIAL Y DEPORTIVO SOLER').width;
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.5;
+    if (left) ctx.fillRect(tx, y + 16, Math.min(420, tw), 2);
+    else ctx.fillRect(tx - Math.min(300, tw / 2), y + 16, Math.min(600, tw), 2);
+    ctx.globalAlpha = 1;
+  };
+
+  const titleBlock = (topY: number, titleBase: number) => {
+    let y = topY;
+    eyebrow(y, opts.format === 'square' ? 24 : 26);
+    y += titleBase * 0.95;
+    if (show.tournament) {
+      if (left) {
+        let s = titleBase;
+        ctx.font = `800 ${s}px ${DISPLAY}`;
+        while (s > 20 && ctx.measureText(content.tournamentName.toUpperCase()).width > w - 220) {
+          s -= 2;
+          ctx.font = `800 ${s}px ${DISPLAY}`;
+        }
+        ctx.fillStyle = ink;
+        ctx.textAlign = 'left';
+        ctx.fillText(content.tournamentName.toUpperCase(), tx, y);
+      } else {
+        fitCenter(ctx, content.tournamentName.toUpperCase(), w / 2, y, w - 140, titleBase, DISPLAY, 800, ink);
+      }
+      y += titleBase * 0.42;
+    }
     if (show.round) {
-      ctx.font = `800 36px ${DISPLAY}`;
       const t = content.roundLabel.toUpperCase();
-      const pw = Math.min(w - 220, ctx.measureText(t).width + 72);
-      roundRect(ctx, cx - pw / 2, 192, pw, 60, 8);
-      ctx.fillStyle = ink;
+      ctx.font = `800 ${Math.round(titleBase * 0.42)}px ${DISPLAY}`;
+      const pw = Math.min(w - 220, ctx.measureText(t).width + 80);
+      const ph = Math.round(titleBase * 0.72);
+      const px = left ? tx : w / 2 - pw / 2;
+      roundRect(ctx, px, y, pw, ph, 8);
+      ctx.fillStyle = opts.intensity === 'high' ? p.primary : ink;
       ctx.fill();
       ctx.fillStyle = '#ffffff';
       ctx.textAlign = 'center';
-      ctx.fillText(t, cx, 234);
+      ctx.fillText(t, left ? px + pw / 2 : w / 2, y + ph * 0.7);
+      y += ph + titleBase * 0.28;
     }
     if (show.day) {
-      ctx.fillStyle = p.primary;
-      ctx.font = `800 42px ${DISPLAY}`;
-      ctx.textAlign = 'center';
-      ctx.fillText(content.dayTitle, cx, 318);
+      if (opts.dateStyle === 'short') {
+        ctx.fillStyle = p.primary;
+        ctx.font = `800 ${Math.round(titleBase * 0.52)}px ${DISPLAY}`;
+        ctx.textAlign = tAlign;
+        ctx.fillText(content.daySubtitle, tx, y);
+      } else {
+        const anchor = left ? tx + (w - 220) / 2 : w / 2;
+        fitCenter(ctx, content.dayTitle, anchor, y, w - 160, Math.round(titleBase * 0.52), DISPLAY, 800, p.primary);
+        if (opts.dateStyle === 'both') {
+          ctx.fillStyle = ink;
+          ctx.globalAlpha = 0.7;
+          ctx.font = `500 ${Math.round(titleBase * 0.3)}px ${SANS}`;
+          ctx.textAlign = tAlign;
+          ctx.fillText(content.daySubtitle, tx, y + Math.round(titleBase * 0.38));
+          ctx.globalAlpha = 1;
+        }
+      }
+    }
+    return y;
+  };
+
+  const matchup = (cy: number, r: number, nameY: number) => {
+    const treat = opts.crest === 'auto' ? 'plate' : opts.crest;
+    const colors = { ring: ink, glow: ink, plate: '#EAE4D6', plateInk: ink };
+    const lx = asym ? 320 : opts.format === 'square' ? 300 : 300;
+    const rx = asym ? 760 : w - lx;
+    paintCrest(ctx, assets.home, lx, cy, r * crestScale, content.homeName, treat, colors, 0.14);
+    paintCrest(ctx, assets.away, rx, cy + (left ? r * 0.3 : 0), r * crestScale * (left ? 0.88 : 1), content.awayName, treat, colors, 0.14);
+    // VS editorial con filetes
+    ctx.fillStyle = p.primary;
+    ctx.font = `800 ${Math.round(r * 0.34)}px ${DISPLAY}`;
+    ctx.textAlign = 'center';
+    const vsx = (lx + rx) / 2;
+    ctx.fillText('VS', vsx, cy + r * 0.12);
+    ctx.fillStyle = ink;
+    ctx.globalAlpha = 0.4;
+    ctx.fillRect(lx + r * crestScale + 20, cy - 1, Math.max(10, vsx - 60 - (lx + r * crestScale + 20)), 2);
+    ctx.fillRect(vsx + 60, cy - 1, Math.max(10, rx - r * crestScale - 20 - (vsx + 60)), 2);
+    ctx.globalAlpha = 1;
+    const drawNames = (ny: number) => {
+      if (asym) {
+        ctx.textAlign = 'left';
+        ctx.fillStyle = ink;
+        let s1 = Math.round(r * 0.36);
+        ctx.font = `800 ${s1}px ${DISPLAY}`;
+        while (s1 > 16 && ctx.measureText(content.homeName.toUpperCase()).width > w - 220) {
+          s1 -= 2;
+          ctx.font = `800 ${s1}px ${DISPLAY}`;
+        }
+        ctx.fillText(content.homeName.toUpperCase(), tx, ny);
+        if (show.homeAway) {
+          ctx.fillStyle = p.primary;
+          ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
+          ctx.fillText('LOCAL', tx, ny + 32);
+        }
+        ctx.fillStyle = ink;
+        ctx.globalAlpha = 0.75;
+        let s2 = Math.round(r * 0.3);
+        ctx.font = `800 ${s2}px ${DISPLAY}`;
+        while (s2 > 14 && ctx.measureText(content.awayName.toUpperCase()).width > w - 220) {
+          s2 -= 2;
+          ctx.font = `800 ${s2}px ${DISPLAY}`;
+        }
+        ctx.fillText(content.awayName.toUpperCase(), tx, ny + 32 + 52);
+        ctx.globalAlpha = 1;
+        if (show.homeAway) {
+          ctx.fillStyle = ink;
+          ctx.globalAlpha = 0.55;
+          ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
+          ctx.fillText('VISITANTE', tx, ny + 32 + 52 + 28);
+          ctx.globalAlpha = 1;
+        }
+      } else {
+        fitCenter(ctx, content.homeName.toUpperCase(), lx, ny, 400, Math.round(r * 0.36), DISPLAY, 800, ink);
+        fitCenter(ctx, content.awayName.toUpperCase(), rx, ny, 400, Math.round(r * 0.36), DISPLAY, 800, ink);
+      }
+    };
+    drawNames(nameY);
+    if (show.homeAway && !asym) {
       ctx.fillStyle = ink;
-      ctx.globalAlpha = 0.7;
-      ctx.font = `500 26px ${SANS}`;
-      ctx.fillText(content.daySubtitle, cx, 352);
+      ctx.globalAlpha = 0.55;
+      ctx.font = `700 ${Math.round(r * 0.2)}px ${SANS}`;
+      ctx.textAlign = 'center';
+      ctx.fillText('LOCAL', lx, nameY + 34);
+      ctx.fillText('VISITANTE', rx, nameY + 34);
       ctx.globalAlpha = 1;
     }
-    const cy = 500;
-    const r = 88;
-    drawCrest(ctx, assets.home, 300, cy, r, content.homeName, { base: '#ffffff', ring: ink, glow: ink, glowAlpha: 0.12 });
-    drawCrest(ctx, assets.away, 780, cy, r, content.awayName, { base: '#ffffff', ring: ink, glow: ink, glowAlpha: 0.12 });
+    return { lx, rx };
+  };
+
+  const scheduleBlock = (ruleY: number, gridEnd: number, titleSize: number) => {
     ctx.fillStyle = p.primary;
-    ctx.font = `800 40px ${DISPLAY}`;
-    ctx.textAlign = 'center';
-    ctx.fillText('VS', cx, cy + 14);
-    fitCenter(ctx, content.homeName.toUpperCase(), 300, 628, 380, 42, DISPLAY, 800, ink);
-    fitCenter(ctx, content.awayName.toUpperCase(), 780, 628, 380, 42, DISPLAY, 800, ink);
+    if (left) ctx.fillRect(tx, ruleY, 64, 6);
+    else ctx.fillRect(90, ruleY, w - 180, 6);
+    const titleY = ruleY + titleSize + 10;
     ctx.fillStyle = ink;
-    ctx.globalAlpha = 0.55;
-    ctx.font = `700 22px ${SANS}`;
-    ctx.fillText('LOCAL', 300, 656);
-    ctx.fillText('VISITANTE', 780, 656);
-    ctx.globalAlpha = 1;
-    rule(ctx, 90, 678, w - 180, p.primary, 5);
-    ctx.fillStyle = ink;
-    ctx.font = `800 34px ${DISPLAY}`;
-    ctx.textAlign = 'left';
-    ctx.fillText(`HORARIOS · ${content.rows.length} CAT.`, 90, 716);
-    compactGrid(ctx, 90, 730, w - 180, 202, content.rows, {
-      card: '#ffffff', category: ink, time: p.primary,
-      timePending: 'rgba(20,20,20,0.45)', accent: p.primary,
-      summaryBg: ink, summaryFg: '#ffffff',
-    }, 62, 92);
-    if (show.venue && content.venue) {
-      drawPin(ctx, 90 + 12, 942, 24, p.primary);
-      ctx.fillStyle = ink;
-      ctx.font = `600 25px ${SANS}`;
+    ctx.font = `800 ${titleSize}px ${DISPLAY}`;
+    const head = `HORARIOS · ${content.rows.length} CAT.`;
+    if (left) {
       ctx.textAlign = 'left';
-      ctx.fillText(content.venue.toUpperCase().slice(0, 48), 90 + 34, 950);
+      ctx.fillText(head, tx, titleY);
+    } else {
+      ctx.textAlign = 'center';
+      ctx.fillText(head, w / 2, titleY);
     }
-    ctx.fillStyle = '#ffffff';
-    ctx.font = `700 25px ${SANS}`;
+    const gridY = titleY + 20;
+    paintSchedule(ctx, opts.schedule, left ? tx : 90, gridY, left ? w - tx - 70 : w - 180, gridEnd - gridY, content.rows, scheduleStyle(p), false, 52);
+  };
+
+  const footer = () => {
+    if (!hasFooter) return;
+    const bandTop = h - (opts.format === 'square' ? 120 : 150);
     ctx.textAlign = 'center';
-    ctx.fillText('UN LUGAR PARA COMPARTIR EN FAMILIA', cx, h - 72);
-    ctx.globalAlpha = 0.8;
-    ctx.font = `500 23px ${SANS}`;
-    ctx.fillText('csdsoler.com.ar', cx, h - 40);
-    ctx.globalAlpha = 1;
+    ctx.fillStyle = '#ffffff';
+    if (show.slogan) {
+      ctx.font = `700 ${opts.format === 'square' ? 25 : 30}px ${SANS}`;
+      ctx.fillText('UN LUGAR PARA COMPARTIR EN FAMILIA', w / 2, bandTop + (show.web ? 62 : 88));
+    }
+    if (show.web) {
+      ctx.globalAlpha = 0.85;
+      ctx.font = `500 ${opts.format === 'square' ? 23 : 28}px ${SANS}`;
+      ctx.fillText('csdsoler.com.ar', w / 2, bandTop + (show.slogan ? 100 : 88));
+      ctx.globalAlpha = 1;
+    }
+  };
+
+  /** En asimétrica los nombres se apilan: se baja el bloque de horarios. */
+  const stackGap = asym ? 96 : 0;
+  if (opts.format === 'square') {
+    titleBlock(76, 76);
+    matchup(500, 88, 622);
+    scheduleBlock(676, 906, 32);
+    if (show.venue && content.venue) {
+      drawPin(ctx, (left ? tx : 90) + 12, 918, 22, p.primary);
+      ctx.fillStyle = ink;
+      ctx.font = `600 24px ${SANS}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(content.venue.toUpperCase().slice(0, 48), (left ? tx : 90) + 40, 926);
+    }
+    footer();
     return;
   }
-
-  const isFeed = format === 'feed';
-  const headTop = isFeed ? 56 : 78;
-  eyebrow(ctx, cx, headTop, 'CLUB SOCIAL Y DEPORTIVO SOLER', ink, isFeed ? 25 : 29);
-  fitCenter(ctx, content.tournamentName.toUpperCase(), cx, isFeed ? 150 : 220, w - 120, isFeed ? 92 : 128, DISPLAY, 800, ink);
-  if (show.round) {
-    ctx.font = `800 ${isFeed ? 40 : 46}px ${DISPLAY}`;
-    const t = content.roundLabel.toUpperCase();
-    const pw = Math.min(w - 200, ctx.measureText(t).width + 90);
-    const py = isFeed ? 176 : 250;
-    roundRect(ctx, cx - pw / 2, py, pw, isFeed ? 62 : 76, 8);
-    ctx.fillStyle = p.primary;
-    ctx.fill();
-    ctx.fillStyle = '#ffffff';
-    ctx.textAlign = 'center';
-    ctx.fillText(t, cx, py + (isFeed ? 46 : 56));
-  }
-  if (show.day) {
-    const dy = isFeed ? 296 : 430;
-    ctx.fillStyle = p.primary;
-    ctx.font = `800 ${isFeed ? 48 : 60}px ${DISPLAY}`;
-    ctx.textAlign = 'center';
-    const title = content.dayTitle;
-    let ds = isFeed ? 48 : 60;
-    ctx.font = `800 ${ds}px ${DISPLAY}`;
-    while (ds > 20 && ctx.measureText(title).width > w - 140) {
-      ds -= 2;
-      ctx.font = `800 ${ds}px ${DISPLAY}`;
+  const isFeed = opts.format === 'feed';
+  titleBlock(isFeed ? 58 : 74, isFeed ? 88 : impact ? 132 : 118);
+  if (isFeed) {
+    matchup(498, 100, 652);
+    scheduleBlock(716 + stackGap, 1150, 36);
+    if (show.venue && content.venue) {
+      drawPin(ctx, (left ? tx : 90) + 13, 1162, 26, p.primary);
+      ctx.fillStyle = ink;
+      ctx.font = `600 27px ${SANS}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(content.venue.toUpperCase().slice(0, 50), (left ? tx : 90) + 42, 1170);
     }
-    ctx.fillText(title, cx, dy);
-    ctx.fillStyle = ink;
-    ctx.globalAlpha = 0.7;
-    ctx.font = `500 ${isFeed ? 30 : 34}px ${SANS}`;
-    ctx.fillText(content.daySubtitle, cx, dy + (isFeed ? 42 : 48));
-    ctx.globalAlpha = 1;
+  } else {
+    matchup(850, 158, 1058);
+    scheduleBlock(1150 + stackGap, hasFooter ? 1690 : 1790, 42);
+    if (show.venue && content.venue) {
+      const vy = (hasFooter ? 1690 : 1790) + 38;
+      drawPin(ctx, (left ? tx : 90) + 14, vy - 8, 28, p.primary);
+      ctx.fillStyle = ink;
+      ctx.font = `600 30px ${SANS}`;
+      ctx.textAlign = 'left';
+      ctx.fillText(content.venue.toUpperCase().slice(0, 50), (left ? tx : 90) + 44, vy);
+    }
   }
-
-  const cy = isFeed ? 498 : 860;
-  const r = isFeed ? 100 : 158;
-  const lx = isFeed ? 280 : 300;
-  drawCrest(ctx, assets.home, lx, cy, r, content.homeName, { base: '#ffffff', ring: ink, glow: ink, glowAlpha: 0.14 });
-  drawCrest(ctx, assets.away, w - lx, cy, r, content.awayName, { base: '#ffffff', ring: ink, glow: ink, glowAlpha: 0.14 });
-  rule(ctx, lx + r + 24, cy - 2, cx - (lx + r + 24) - 70, ink, 3);
-  rule(ctx, cx + 70, cy - 2, (w - lx - r - 24) - (cx + 70), ink, 3);
-  ctx.fillStyle = p.primary;
-  ctx.font = `800 ${isFeed ? 46 : 54}px ${DISPLAY}`;
-  ctx.textAlign = 'center';
-  ctx.fillText('VS', cx, cy + (isFeed ? 16 : 19));
-
-  const ny = isFeed ? 656 : 1072;
-  fitCenter(ctx, content.homeName.toUpperCase(), lx, ny, 400, isFeed ? 46 : 54, DISPLAY, 800, ink);
-  fitCenter(ctx, content.awayName.toUpperCase(), w - lx, ny, 400, isFeed ? 46 : 54, DISPLAY, 800, ink);
-  ctx.fillStyle = ink;
-  ctx.globalAlpha = 0.55;
-  ctx.font = `700 ${isFeed ? 24 : 28}px ${SANS}`;
-  ctx.fillText('LOCAL', lx, ny + (isFeed ? 34 : 40));
-  ctx.fillText('VISITANTE', w - lx, ny + (isFeed ? 34 : 40));
-  ctx.globalAlpha = 1;
-
-  const stY = isFeed ? 716 : 1170;
-  rule(ctx, 90, stY, w - 180, p.primary, 6);
-  ctx.fillStyle = ink;
-  ctx.font = `800 ${isFeed ? 38 : 42}px ${DISPLAY}`;
-  ctx.textAlign = 'left';
-  ctx.fillText(`HORARIOS · ${content.rows.length} CAT.`, 90, stY + (isFeed ? 48 : 54));
-  const gridTop = stY + (isFeed ? 60 : 74);
-  const gridEnd = (isFeed ? h - 200 : h - 250);
-  scheduleEditorial(ctx, 90, gridTop, w - 180, gridEnd - gridTop, content.rows, p, isFeed ? 52 : 58);
-
-  if (show.venue && content.venue) {
-    const vy = gridEnd + (isFeed ? 30 : 40);
-    drawPin(ctx, 90 + 14, vy - 8, 28, p.primary);
-    ctx.fillStyle = ink;
-    ctx.font = `600 ${isFeed ? 28 : 30}px ${SANS}`;
-    ctx.textAlign = 'left';
-    const label = content.venue.toUpperCase();
-    ctx.fillText(label.length > 52 ? label.slice(0, 52) : label, 90 + 40, vy);
-  }
-
-  // Pie dentro de la banda institucional
-  ctx.fillStyle = '#ffffff';
-  ctx.font = `700 ${isFeed ? 28 : 30}px ${SANS}`;
-  ctx.textAlign = 'center';
-  ctx.fillText('UN LUGAR PARA COMPARTIR EN FAMILIA', cx, h - (isFeed ? 88 : 92));
-  ctx.globalAlpha = 0.85;
-  ctx.font = `500 ${isFeed ? 26 : 28}px ${SANS}`;
-  ctx.fillText('csdsoler.com.ar', cx, h - (isFeed ? 52 : 54));
-  ctx.globalAlpha = 1;
+  footer();
 }

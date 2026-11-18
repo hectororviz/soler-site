@@ -1,10 +1,11 @@
 /**
- * Estudio de flyers (admin): elige partido real del fixture, plantilla,
- * formato, colores y fondo; vista previa en vivo e idéntica a la exportación.
+ * Estudio de flyers (admin): partido real del fixture + sistema configurable
+ * (plantilla, formato, contenido, fecha, escudos, horarios, composición,
+ * intensidad, colores, fondo). Vista previa idéntica a la exportación.
  */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
-import { Download, ImagePlus, RotateCcw, TriangleAlert } from 'lucide-react';
+import { Download, ImagePlus, RotateCcw } from 'lucide-react';
 import { AdminPage, Field, Panel, inputCls } from '../../admin/components';
 import { usePageTitle } from '../../../lib/usePageTitle';
 import { useFixtureRounds, useTournaments } from '../../fixtures/useFixture';
@@ -15,14 +16,64 @@ import {
   TEMPLATES,
   defaultOptions,
   flyerFileName,
+  type Composition,
+  type CrestTreatment,
+  type DateStyle,
   type FlyerContent,
   type FlyerOptions,
   type FormatId,
+  type Intensity,
+  type ScheduleVariant,
   type TemplateId,
 } from '../types';
 import type { FixtureClash, FixtureRound } from '../../../types';
 
-const STORAGE_KEY = 'csd-flyer-studio-v1';
+const STORAGE_KEY = 'csd-flyer-studio-v2';
+
+const DATE_STYLES: { id: DateStyle; label: string; hint: string }[] = [
+  { id: 'long', label: 'Larga', hint: 'Sábado 21 de noviembre' },
+  { id: 'short', label: 'Corta', hint: '21/11/2026' },
+  { id: 'both', label: 'Ambas', hint: 'Larga + corta' },
+];
+
+const CREST_TREATMENTS: { id: CrestTreatment; label: string }[] = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'none', label: 'Sin marco' },
+  { id: 'ring', label: 'Contorno' },
+  { id: 'glow', label: 'Glow' },
+  { id: 'plate', label: 'Placa' },
+];
+
+const SCHEDULE_VARIANTS: { id: ScheduleVariant; label: string }[] = [
+  { id: 'auto', label: 'Auto' },
+  { id: 'list', label: 'Lista' },
+  { id: 'columns', label: 'Columnas' },
+  { id: 'cards', label: 'Tarjetas' },
+  { id: 'table', label: 'Tabla' },
+];
+
+const COMPOSITIONS: { id: Composition; label: string }[] = [
+  { id: 'center', label: 'Centrada' },
+  { id: 'compact', label: 'Compacta' },
+  { id: 'asymmetric', label: 'Asimétrica' },
+  { id: 'impact', label: 'Impact' },
+];
+
+const INTENSITIES: { id: Intensity; label: string }[] = [
+  { id: 'low', label: 'Sobria' },
+  { id: 'medium', label: 'Media' },
+  { id: 'high', label: 'Alta' },
+];
+
+const SHOW_LABELS: { key: keyof FlyerOptions['show']; label: string }[] = [
+  { key: 'tournament', label: 'Torneo' },
+  { key: 'round', label: 'N° de fecha' },
+  { key: 'day', label: 'Fecha' },
+  { key: 'venue', label: 'Sede' },
+  { key: 'homeAway', label: 'Local/visitante' },
+  { key: 'slogan', label: 'Pie institucional' },
+  { key: 'web', label: 'Web' },
+];
 
 /** Contenido de prueba (solo ?demo=1 en dev): no sale del navegador. */
 function demoData(): { tournaments: { id: string; slug: string; name: string }[]; rounds: FixtureRound[] } {
@@ -57,15 +108,51 @@ function demoData(): { tournaments: { id: string; slug: string; name: string }[]
 
 function loadPrefs(): Partial<FlyerOptions> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem('csd-flyer-studio-v1');
     if (!raw) return {};
     const p = JSON.parse(raw) as Partial<FlyerOptions>;
-    if (p.template && !TEMPLATES.some((t) => t.id === p.template)) delete p.template;
-    if (p.format && !FORMATS[p.format as FormatId]) delete p.format;
-    return { template: p.template, format: p.format, palette: p.palette ?? {}, show: p.show };
+    const out: Partial<FlyerOptions> = {};
+    if (p.template && TEMPLATES.some((t) => t.id === p.template)) out.template = p.template;
+    if (p.format && FORMATS[p.format as FormatId]) out.format = p.format;
+    if (p.palette) out.palette = p.palette;
+    if (p.show) out.show = { ...defaultOptions().show, ...p.show };
+    if (p.dateStyle && DATE_STYLES.some((d) => d.id === p.dateStyle)) out.dateStyle = p.dateStyle;
+    if (p.crest && CREST_TREATMENTS.some((c) => c.id === p.crest)) out.crest = p.crest;
+    if (p.schedule && SCHEDULE_VARIANTS.some((s) => s.id === p.schedule)) out.schedule = p.schedule;
+    if (p.composition && COMPOSITIONS.some((c) => c.id === p.composition)) out.composition = p.composition;
+    if (p.intensity && INTENSITIES.some((i) => i.id === p.intensity)) out.intensity = p.intensity;
+    return out;
   } catch {
     return {};
   }
+}
+
+function Segmented<T extends string>({
+  options,
+  value,
+  onChange,
+  ariaLabel,
+}: {
+  options: readonly { id: T; label: string; hint?: string }[];
+  value: T;
+  onChange: (v: T) => void;
+  ariaLabel: string;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2" role="group" aria-label={ariaLabel}>
+      {options.map((o) => (
+        <button
+          key={o.id}
+          onClick={() => onChange(o.id)}
+          aria-pressed={value === o.id}
+          title={o.hint}
+          className={`rounded-card border px-4 py-2.5 text-sm font-bold ${value === o.id ? 'border-primary bg-primary-soft text-primary' : 'border-line bg-white'}`}
+        >
+          {o.label}
+        </button>
+      ))}
+    </div>
+  );
 }
 
 export function FlyerStudio() {
@@ -114,7 +201,6 @@ export function FlyerStudio() {
     }
   }, [opts]);
 
-  // Vista previa en vivo (mismo renderer que la exportación).
   useEffect(() => {
     if (!content || !canvasRef.current) return;
     let alive = true;
@@ -182,7 +268,7 @@ export function FlyerStudio() {
   const spec = FORMATS[opts.format];
 
   return (
-    <AdminPage title="Estudio de flyers" desc="Partido real del fixture + plantilla + formato. La vista previa es idéntica al PNG exportado.">
+    <AdminPage title="Estudio de flyers" desc="Partido real del fixture + sistema configurable. La vista previa es idéntica al PNG exportado.">
       <div className="grid gap-4 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <Panel
           title="Vista previa"
@@ -214,8 +300,8 @@ export function FlyerStudio() {
                 {rendering && <span className="text-sm text-ink-muted">Actualizando…</span>}
               </div>
               {renderError && (
-                <p role="alert" className="mt-2 inline-flex items-center gap-1 text-sm font-semibold text-primary">
-                  <TriangleAlert size={15} /> {renderError}
+                <p role="alert" className="mt-2 text-sm font-semibold text-primary">
+                  {renderError}
                 </p>
               )}
               <p className="mt-2 break-all text-xs text-ink-muted">{content && flyerFileName(content, opts)}</p>
@@ -270,19 +356,51 @@ export function FlyerStudio() {
           </Panel>
 
           <Panel title="Formato">
-            <div className="flex flex-wrap gap-2">
-              {(Object.keys(FORMATS) as FormatId[]).map((f) => (
-                <button
-                  key={f}
-                  onClick={() => patch({ format: f })}
-                  aria-pressed={opts.format === f}
-                  className={`rounded-card border px-4 py-2.5 text-sm font-bold ${opts.format === f ? 'border-primary bg-primary-soft text-primary' : 'border-line bg-white'}`}
-                >
-                  {FORMATS[f].label}
-                  <span className="ml-2 font-normal text-ink-muted">{FORMATS[f].w}×{FORMATS[f].h}</span>
-                </button>
+            <Segmented
+              ariaLabel="Formato de exportación"
+              value={opts.format}
+              onChange={(v: FormatId) => patch({ format: v })}
+              options={(Object.keys(FORMATS) as FormatId[]).map((f) => ({ id: f, label: `${FORMATS[f].label} ${FORMATS[f].w}×${FORMATS[f].h}` }))}
+            />
+          </Panel>
+
+          <Panel title="Contenido visible">
+            <div className="flex flex-wrap gap-x-6 gap-y-2">
+              {SHOW_LABELS.map(({ key, label }) => (
+                <label key={key} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
+                  <input
+                    type="checkbox"
+                    checked={opts.show[key]}
+                    onChange={(e) => patch({ show: { ...opts.show, [key]: e.target.checked } })}
+                    className="h-5 w-5 accent-[#B8202D]"
+                  />
+                  {label}
+                </label>
               ))}
             </div>
+          </Panel>
+
+          <Panel title="Fecha">
+            <Segmented ariaLabel="Formato de fecha" value={opts.dateStyle} onChange={(v: DateStyle) => patch({ dateStyle: v })} options={DATE_STYLES} />
+            <p className="mt-2 text-xs text-ink-muted">Por defecto solo el formato largo (sin duplicar).</p>
+          </Panel>
+
+          <Panel title="Escudos">
+            <Segmented ariaLabel="Tratamiento del escudo" value={opts.crest} onChange={(v: CrestTreatment) => patch({ crest: v })} options={CREST_TREATMENTS} />
+            <p className="mt-2 text-xs text-ink-muted">Sin fondo blanco por defecto. Para PNG transparentes usá “Sin marco”; para JPG “Placa”.</p>
+          </Panel>
+
+          <Panel title="Horarios">
+            <Segmented ariaLabel="Variante de horarios" value={opts.schedule} onChange={(v: ScheduleVariant) => patch({ schedule: v })} options={SCHEDULE_VARIANTS} />
+            <p className="mt-2 text-xs text-ink-muted">Auto reacomoda (lista → columnas) para mostrar todas las categorías antes de resumir.</p>
+          </Panel>
+
+          <Panel title="Composición">
+            <Segmented ariaLabel="Composición" value={opts.composition} onChange={(v: Composition) => patch({ composition: v })} options={COMPOSITIONS} />
+          </Panel>
+
+          <Panel title="Intensidad visual">
+            <Segmented ariaLabel="Intensidad visual" value={opts.intensity} onChange={(v: Intensity) => patch({ intensity: v })} options={INTENSITIES} />
           </Panel>
 
           <Panel
@@ -307,22 +425,6 @@ export function FlyerStudio() {
                     <code className="text-xs text-ink-muted">{opts.palette[k] ?? 'auto'}</code>
                   </span>
                 </Field>
-              ))}
-            </div>
-          </Panel>
-
-          <Panel title="Contenido visible">
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
-              {(['day', 'round', 'venue', 'footer'] as const).map((k) => (
-                <label key={k} className="inline-flex cursor-pointer items-center gap-2 text-sm font-semibold">
-                  <input
-                    type="checkbox"
-                    checked={opts.show[k]}
-                    onChange={(e) => patch({ show: { ...opts.show, [k]: e.target.checked } })}
-                    className="h-5 w-5 accent-[#B8202D]"
-                  />
-                    {k === 'day' ? 'Día y fecha' : k === 'round' ? 'N° de fecha' : k === 'venue' ? 'Sede' : 'Pie institucional'}
-                </label>
               ))}
             </div>
           </Panel>

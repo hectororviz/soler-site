@@ -6,7 +6,7 @@ import { FORMATS, type FlyerContent, type FlyerOptions, type Palette } from './t
 import { loadImageCached, waitForFonts } from './assets';
 import { MATCHDAY_PRO_DEFAULTS, renderMatchdayPro } from './templates/matchdayPro';
 import { MINIMAL_PREMIUM_DEFAULTS, renderMinimalPremium } from './templates/minimalPremium';
-import { FOOTBALL_ENERGY_DEFAULTS, renderFootballEnergy } from './templates/footballEnergy';
+import { SOCIAL_BOLD_DEFAULTS, renderSocialBold } from './templates/socialBold';
 
 export interface ResolvedAssets {
   home: HTMLImageElement | null;
@@ -15,9 +15,9 @@ export interface ResolvedAssets {
 }
 
 const TEMPLATE_DEFAULTS: Record<FlyerOptions['template'], Palette> = {
-  'matchday-pro': MATCHDAY_PRO_DEFAULTS,
-  'minimal-premium': MINIMAL_PREMIUM_DEFAULTS,
-  'football-energy': FOOTBALL_ENERGY_DEFAULTS,
+  'editorial-clean': MINIMAL_PREMIUM_DEFAULTS,
+  'matchday-stadium': MATCHDAY_PRO_DEFAULTS,
+  'social-bold': SOCIAL_BOLD_DEFAULTS,
 };
 
 export function resolvePalette(opts: FlyerOptions): Palette {
@@ -44,14 +44,14 @@ export async function renderFlyerCanvas(content: FlyerContent, opts: FlyerOption
   if (!ctx) throw new Error('Canvas no disponible.');
   const palette = resolvePalette(opts);
   switch (opts.template) {
-    case 'matchday-pro':
-      renderMatchdayPro(ctx, content, palette, opts.format, opts.show, assets);
+    case 'matchday-stadium':
+      renderMatchdayPro(ctx, content, opts, palette, assets);
       break;
-    case 'minimal-premium':
-      renderMinimalPremium(ctx, content, palette, opts.format, opts.show, assets);
+    case 'editorial-clean':
+      renderMinimalPremium(ctx, content, opts, palette, assets);
       break;
-    case 'football-energy':
-      renderFootballEnergy(ctx, content, palette, opts.format, opts.show, assets);
+    case 'social-bold':
+      renderSocialBold(ctx, content, opts, palette, assets);
       break;
   }
   return canvas;

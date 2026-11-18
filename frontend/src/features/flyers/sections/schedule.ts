@@ -1,0 +1,364 @@
+/**
+ * Bloque de horarios configurable: lista / columnas / tarjetas / tabla.
+ * `auto` reacomoda (lista → columnas → denso) para mostrar todas las
+ * categorías antes de resumir con "+N". Ninguna variante es una tabla
+ * administrativa: todas usan jerarquía deportiva (categoría + hora heroica).
+ */
+import { DISPLAY, SANS, roundRect, skewedAt } from '../templates/common';
+import { fitRows } from '../templates/common';
+import type { ScheduleVariant } from '../types';
+
+export interface ScheduleStyle {
+  rowBg: string;
+  rowBgAlt: string;
+  catColor: string;
+  timeColor: string;
+  timePending: string;
+  accent: string;
+  summaryBg: string;
+  summaryFg: string;
+  leaderDots: boolean;
+  radius: number;
+}
+
+function quad(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number,
+  skew: number,
+) {
+  if (!skew) {
+    roundRect(ctx, x, y, w, h, r);
+    return;
+  }
+  const rr = Math.min(r, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + skew + rr, y);
+  ctx.lineTo(x + w, y);
+  ctx.lineTo(x + w - skew, y + h);
+  ctx.lineTo(x, y + h);
+  ctx.closePath();
+}
+
+function textRow(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  x: number,
+  y: number,
+  maxW: number,
+  base: number,
+  family: string,
+  weight: number,
+  color: string,
+  align: CanvasTextAlign,
+  anchorX: number,
+  anchorY: number,
+  skew: boolean,
+) {
+  const draw = () => {
+    let size = base;
+    ctx.font = `${weight} ${size}px ${family}`;
+    while (size > 12 && ctx.measureText(text).width > maxW) {
+      size -= 2;
+      ctx.font = `${weight} ${size}px ${family}`;
+    }
+    ctx.fillStyle = color;
+    ctx.textAlign = align;
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillText(text, x, y);
+  };
+  if (skew) skewedAt(ctx, anchorX, anchorY, draw);
+  else draw();
+}
+
+function summaryBar(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  hidden: number,
+  style: ScheduleStyle,
+  skew: boolean,
+) {
+  quad(ctx, x, y, w, Math.max(20, h), style.radius, skew ? 10 : 0);
+  ctx.fillStyle = style.summaryBg;
+  ctx.fill();
+  textRow(ctx, `+${hidden} MÁS`, x + w / 2, y + h * 0.64, w - 40, Math.round(h * 0.34), DISPLAY, 800, style.summaryFg, 'center', x + w / 2, y + h / 2, skew);
+}
+
+function emptyMsg(ctx: CanvasRenderingContext2D, x: number, y: number, w: number, style: ScheduleStyle, skew: boolean) {
+  textRow(ctx, 'Horarios a confirmar', x + w / 2, y + 56, w - 40, 30, SANS, 500, style.timePending, 'center', x + w / 2, y + 40, skew);
+}
+
+function dotLeaders(
+  ctx: CanvasRenderingContext2D,
+  x0: number,
+  x1: number,
+  y: number,
+  color: string,
+) {
+  if (x1 <= x0 + 10) return;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.globalAlpha = 0.32;
+  ctx.font = `700 22px ${SANS}`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  let dots = '';
+  const n = Math.min(60, Math.floor((x1 - x0) / 15));
+  for (let k = 0; k < n; k++) dots += '· ';
+  ctx.fillText(dots, x0, y);
+  ctx.restore();
+}
+
+function listLayout(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  regionH: number,
+  rows: { category: string; time: string }[],
+  style: ScheduleStyle,
+  skew: boolean,
+  minRow: number,
+) {
+  if (!rows.length) {
+    emptyMsg(ctx, x, y, w, style, skew);
+    return;
+  }
+  const fit = fitRows(rows, regionH, 100, minRow, true);
+  const list = fit.hidden > 0 ? [...fit.visible, { category: `+${fit.hidden} MÁS`, time: '' }] : fit.visible;
+  const rh = fit.rowH;
+  const sk = skew ? 14 : 0;
+  list.forEach((row, i) => {
+    const ry = y + i * rh;
+    const isMore = row.time === '' && row.category.startsWith('+');
+    quad(ctx, x, ry, w, rh - 10, style.radius, sk);
+    ctx.fillStyle = isMore ? style.summaryBg : i % 2 === 0 ? style.rowBg : style.rowBgAlt;
+    ctx.fill();
+    if (!isMore) {
+      ctx.fillStyle = row.time ? style.accent : style.timePending;
+      if (skew) {
+        ctx.fillRect(x + sk, ry, 8, rh - 10);
+      } else {
+        roundRect(ctx, x, ry, 8, rh - 10, 4);
+        ctx.fill();
+      }
+    }
+    const cy = ry + rh / 2;
+    if (isMore) {
+      textRow(ctx, row.category, x + w / 2, ry + rh * 0.62, w - 40, Math.round(rh * 0.3), DISPLAY, 800, style.summaryFg, 'center', x + w / 2, cy, skew);
+      return;
+    }
+    let cs = Math.round(rh * 0.32);
+    const maxCat = w - (row.time ? 300 : 60) - sk * 2;
+    ctx.font = `700 ${cs}px ${DISPLAY}`;
+    while (cs > 12 && ctx.measureText(row.category.toUpperCase()).width > maxCat) {
+      cs -= 2;
+      ctx.font = `700 ${cs}px ${DISPLAY}`;
+    }
+    textRow(ctx, row.category.toUpperCase(), x + 30 + sk, cy + cs * 0.32, maxCat, cs, DISPLAY, 700, style.catColor, 'left', x + w / 2, cy, skew);
+    if (style.leaderDots && row.time) {
+      const catW = Math.min(maxCat, ctx.measureText(row.category.toUpperCase()).width);
+      const drawDots = () => dotLeaders(ctx, x + 30 + sk + catW + 16, x + w - 300 - sk, cy + 8, style.catColor);
+      if (skew) skewedAt(ctx, x + w / 2, cy, drawDots);
+      else drawDots();
+    }
+    if (row.time) {
+      const pending = row.time === 'A confirmar';
+      textRow(
+        ctx, row.time, x + w - 26 - sk, cy + rh * 0.15, 260,
+        pending ? Math.round(rh * 0.28) : Math.round(rh * 0.42), DISPLAY, 800,
+        pending ? style.timePending : style.timeColor, 'right', x + w / 2, cy, skew,
+      );
+    }
+  });
+}
+
+function gridLayout(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  regionH: number,
+  rows: { category: string; time: string }[],
+  style: ScheduleStyle,
+  skew: boolean,
+  minCell: number,
+  maxCell: number,
+  cols: number,
+  centered: boolean,
+) {
+  if (!rows.length) {
+    emptyMsg(ctx, x, y, w, style, skew);
+    return;
+  }
+  const gap = 16;
+  const cw = (w - gap * (cols - 1)) / cols;
+  const sk = skew ? 12 : 0;
+  const perCol = Math.ceil(rows.length / cols);
+  let ch = Math.min(maxCell, regionH / perCol);
+  let items = rows;
+  let hidden = 0;
+  if (ch < minCell) {
+    ch = minCell;
+    const visRows = Math.max(1, Math.floor(regionH / ch));
+    const capacity = cols * visRows;
+    if (rows.length > capacity) {
+      items = rows.slice(0, capacity - cols);
+      hidden = rows.length - items.length;
+    }
+  }
+  items.forEach((row, i) => {
+    const col = i % cols;
+    const rIdx = Math.floor(i / cols);
+    const gx = x + col * (cw + gap);
+    const gy = y + rIdx * ch;
+    quad(ctx, gx, gy, cw, ch - 10, style.radius, sk);
+    ctx.fillStyle = style.rowBg;
+    ctx.fill();
+    ctx.fillStyle = row.time ? style.accent : style.timePending;
+    if (skew) ctx.fillRect(gx + sk, gy, 7, ch - 10);
+    else {
+      roundRect(ctx, gx, gy, 7, ch - 10, 3.5);
+      ctx.fill();
+    }
+    const cy = gy + ch / 2;
+    if (centered) {
+      textRow(ctx, row.category.toUpperCase().slice(0, 18), gx + cw / 2, gy + ch * 0.34, cw - 30, Math.round(ch * 0.26), DISPLAY, 700, style.catColor, 'center', gx + cw / 2, cy, skew);
+      const pending = row.time === 'A confirmar';
+      textRow(
+        ctx, row.time, gx + cw / 2, gy + ch * 0.78, cw - 24,
+        pending ? Math.round(ch * 0.24) : Math.round(ch * 0.4), DISPLAY, 800,
+        pending ? style.timePending : style.timeColor, 'center', gx + cw / 2, cy, skew,
+      );
+    } else {
+      textRow(ctx, row.category.toUpperCase().slice(0, 16), gx + 26 + sk, gy + ch * 0.36, cw - 60, Math.round(ch * 0.28), DISPLAY, 700, style.catColor, 'left', gx + cw / 2, cy, skew);
+      const pending = row.time === 'A confirmar';
+      textRow(
+        ctx, row.time, gx + 26 + sk, gy + ch * 0.8, cw - 50,
+        pending ? Math.round(ch * 0.26) : Math.round(ch * 0.42), DISPLAY, 800,
+        pending ? style.timePending : style.timeColor, 'left', gx + cw / 2, cy, skew,
+      );
+    }
+  });
+  if (hidden > 0) {
+    const sy = y + Math.ceil(items.length / cols) * ch;
+    if (sy + ch - 10 <= y + regionH + 4) {
+      summaryBar(ctx, x, sy, w, ch - 10, hidden, style, skew);
+    }
+  }
+}
+
+function tableLayout(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  regionH: number,
+  rows: { category: string; time: string }[],
+  style: ScheduleStyle,
+  skew: boolean,
+) {
+  if (!rows.length) {
+    emptyMsg(ctx, x, y, w, style, skew);
+    return;
+  }
+  const headH = 40;
+  const drawHead = () => {
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.fillStyle = style.catColor;
+    ctx.globalAlpha = 0.6;
+    ctx.font = `800 24px ${DISPLAY}`;
+    ctx.fillText('CAT', x + 16, y + 28);
+    ctx.textAlign = 'right';
+    ctx.fillText('HORA', x + w - 16, y + 28);
+    ctx.globalAlpha = 1;
+  };
+  if (skew) skewedAt(ctx, x + w / 2, y + 20, drawHead);
+  else drawHead();
+  const bodyY = y + headH;
+  const fit = fitRows(rows, regionH - headH, 64, 40, true);
+  const list = fit.hidden > 0 ? [...fit.visible, { category: `+${fit.hidden} MÁS`, time: '' }] : fit.visible;
+  const rh = fit.rowH;
+  const sk = skew ? 10 : 0;
+  list.forEach((row, i) => {
+    const ry = bodyY + i * rh;
+    if (i % 2 === 1) {
+      quad(ctx, x, ry, w, rh - 4, 8, sk);
+      ctx.fillStyle = style.rowBgAlt;
+      ctx.fill();
+    }
+    if (i > 0) {
+      ctx.fillStyle = style.catColor;
+      ctx.globalAlpha = 0.18;
+      ctx.fillRect(x + 12, ry, w - 24, 2);
+      ctx.globalAlpha = 1;
+    }
+    const isMore = row.time === '' && row.category.startsWith('+');
+    if (isMore) {
+      quad(ctx, x, ry, w, rh - 4, 8, sk);
+      ctx.fillStyle = style.summaryBg;
+      ctx.fill();
+      textRow(ctx, row.category, x + w / 2, ry + rh * 0.66, w - 40, Math.round(rh * 0.32), DISPLAY, 800, style.summaryFg, 'center', x + w / 2, ry + rh / 2, skew);
+      return;
+    }
+    textRow(ctx, row.category.toUpperCase(), x + 16 + sk, ry + rh * 0.62, w - 220, Math.round(rh * 0.34), DISPLAY, 700, style.catColor, 'left', x + w / 2, ry + rh / 2, skew);
+    const pending = row.time === 'A confirmar';
+    textRow(
+      ctx, row.time, x + w - 16 - sk, ry + rh * 0.62, 200,
+      pending ? Math.round(rh * 0.3) : Math.round(rh * 0.4), DISPLAY, 800,
+      pending ? style.timePending : style.timeColor, 'right', x + w / 2, ry + rh / 2, skew,
+    );
+  });
+}
+
+export function paintSchedule(
+  ctx: CanvasRenderingContext2D,
+  variant: ScheduleVariant,
+  x: number,
+  y: number,
+  w: number,
+  regionH: number,
+  rows: { category: string; time: string }[],
+  style: ScheduleStyle,
+  skew: boolean,
+  minRow = 54,
+) {
+  const colsFor = (n: number) => (n > 6 ? 3 : 2);
+  switch (variant) {
+    case 'list':
+      listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow);
+      break;
+    case 'columns':
+      gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, 2, false);
+      break;
+    case 'cards':
+      gridLayout(ctx, x, y, w, regionH, rows, style, skew, 76, 118, colsFor(rows.length), true);
+      break;
+    case 'table':
+      tableLayout(ctx, x, y, w, regionH, rows, style, skew);
+      break;
+    case 'auto': {
+      // Cascada: lista completa → columnas completas → denso + resumen.
+      const listH = rows.length * minRow;
+      if (rows.length === 0 || listH <= regionH) {
+        listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow);
+      } else {
+        const cols = 2;
+        const perCol = Math.ceil(rows.length / cols);
+        if (perCol * 64 <= regionH) {
+          gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, cols, false);
+        } else {
+          gridLayout(ctx, x, y, w, regionH, rows, style, skew, 58, 92, cols, false);
+        }
+      }
+      break;
+    }
+  }
+}

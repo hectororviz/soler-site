@@ -95,7 +95,7 @@ test('flyers: matriz plantillas × formatos renderiza y exporta', async ({ page 
   await expect.poll(async () => page.title(), { timeout: 60_000 }).toBe('flyer-lab-done');
   const raw = await page.locator('#flyer-lab-results').textContent();
   const results = JSON.parse(raw ?? '[]') as Array<{ template: string; format: string; w: number; h: number; ok: boolean }>;
-  expect(results).toHaveLength(9);
+  expect(results).toHaveLength(12);
   for (const r of results) {
     expect(r.ok, `${r.template}/${r.format}`).toBe(true);
   }
@@ -113,13 +113,15 @@ test('estudio de flyers en modo demo genera PNG', async ({ page }) => {
   await page.goto('/admin/flyers?demo=1');
   await expect(page.getByRole('heading', { name: /estudio de flyers/i })).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('canvas[aria-label^="Vista previa"]')).toBeVisible();
-  await page.getByRole('button', { name: /minimal premium/i }).click();
-  await page.getByRole('button', { name: /cuadrado/i }).click();
+  await page.getByRole('button', { name: /social bold/i }).click();
+  await page.getByRole('button', { name: /ambas/i }).click();
+  await page.getByRole('button', { name: /^tabla$/i }).click();
+  await page.getByRole('checkbox', { name: /torneo/i }).uncheck();
   const [download] = await Promise.all([
     page.waitForEvent('download', { timeout: 20_000 }),
     page.getByRole('button', { name: /descargar png/i }).click(),
   ]);
-  expect(download.suggestedFilename()).toMatch(/minimal-premium.*square.*\.png$/);
+  expect(download.suggestedFilename()).toMatch(/social-bold.*\.png$/);
 });
 
 test('admin no indexa', async ({ page }) => {

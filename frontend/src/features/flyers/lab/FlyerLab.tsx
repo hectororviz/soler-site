@@ -4,7 +4,7 @@
  * dimensiones + varianza de píxeles para verificación automatizada.
  */
 import { useEffect, useRef, useState } from 'react';
-import { FORMATS, TEMPLATES, defaultOptions, type FlyerContent } from '../types';
+import { FORMATS, TEMPLATES, defaultOptions, type FlyerContent, type FlyerOptions } from '../types';
 import { renderFlyerCanvas } from '../engine';
 
 function demoContent(full: boolean): FlyerContent {
@@ -49,11 +49,34 @@ export function FlyerLab() {
       const full = demoContent(true);
       const stress = demoContent(false);
       for (const t of TEMPLATES) {
-        for (const f of Object.values(FORMATS)) {
+        const combos: { opts: FlyerOptions; content: FlyerContent; tag: string }[] = [
+          ...Object.values(FORMATS).map((f) => ({
+            opts: { ...defaultOptions(), template: t.id, format: f.id },
+            content: t.id === 'social-bold' ? stress : full,
+            tag: `${t.id} / ${f.id}`,
+          })),
+          // Configuración completa: ejercita composición asimétrica, fecha
+          // doble, placa de escudo, variante tabla e intensidad alta.
+          {
+            opts: {
+              ...defaultOptions(),
+              template: t.id,
+              format: 'story',
+              composition: 'asymmetric',
+              dateStyle: 'both',
+              crest: 'plate',
+              schedule: 'table',
+              intensity: 'high',
+              show: { tournament: true, round: true, day: true, venue: true, homeAway: true, slogan: true, web: true },
+            },
+            content: stress,
+            tag: `${t.id} / story / full`,
+          },
+        ];
+        for (const c of combos) {
           try {
-            const opts = { ...defaultOptions(), template: t.id, format: f.id };
-            const canvas = await renderFlyerCanvas(t.id === 'football-energy' ? stress : full, opts);
-            const dimOk = canvas.width === f.w && canvas.height === f.h;
+            const canvas = await renderFlyerCanvas(c.content, c.opts);
+            const dimOk = canvas.width === FORMATS[c.opts.format].w && canvas.height === FORMATS[c.opts.format].h;
             // Varianza: contar colores distintos en una muestra (detecta canvas en blanco/negro plano).
             const g = canvas.getContext('2d');
             const sample = g?.getImageData(0, 0, canvas.width, canvas.height);
@@ -68,18 +91,18 @@ export function FlyerLab() {
               }
             }
             const ok = dimOk && seen.size > 20;
-            out.push({ template: t.id, format: f.id, w: canvas.width, h: canvas.height, distinct: seen.size, ok });
+            out.push({ template: t.id, format: c.opts.format, w: canvas.width, h: canvas.height, distinct: seen.size, ok });
             if (alive && hostRef.current) {
               canvas.style.cssText = 'width:180px;height:auto;border:1px solid #ccc;';
               const wrap = document.createElement('figure');
               const cap = document.createElement('figcaption');
-              cap.textContent = `${t.id} / ${f.id} ${ok ? 'OK' : 'FALLO'}`;
+              cap.textContent = `${c.tag} ${ok ? 'OK' : 'FALLO'}`;
               wrap.append(cap, canvas);
               hostRef.current.append(wrap);
             }
           } catch (e) {
-            out.push({ template: t.id, format: f.id, w: 0, h: 0, distinct: 0, ok: false });
-            console.error('flyer-lab', t.id, f.id, e);
+            out.push({ template: t.id, format: c.opts.format, w: 0, h: 0, distinct: 0, ok: false });
+            console.error('flyer-lab', c.tag, e);
           }
         }
       }

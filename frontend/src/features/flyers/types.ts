@@ -4,7 +4,7 @@
  * por lo que ambas son idénticas por construcción.
  */
 
-export type TemplateId = 'matchday-pro' | 'minimal-premium' | 'football-energy';
+export type TemplateId = 'editorial-clean' | 'matchday-stadium' | 'social-bold';
 
 export type FormatId = 'story' | 'feed' | 'square';
 
@@ -28,9 +28,9 @@ export interface TemplateMeta {
 }
 
 export const TEMPLATES: TemplateMeta[] = [
-  { id: 'matchday-pro', label: 'Matchday Pro', hint: 'Estadio nocturno, focos y dorado' },
-  { id: 'minimal-premium', label: 'Minimal Premium', hint: 'Editorial claro, alto contraste' },
-  { id: 'football-energy', label: 'Football Energy', hint: 'Diagonales y energía de campaña' },
+  { id: 'editorial-clean', label: 'Editorial Clean', hint: 'Premium claro, aire y tipografía' },
+  { id: 'matchday-stadium', label: 'Matchday Stadium', hint: 'Noche de estadio, VS protagonista' },
+  { id: 'social-bold', label: 'Social Bold', hint: 'Impacto para stories y difusión' },
 ];
 
 /** Colores institucionales configurables (se mezclan sobre los defaults de cada plantilla). */
@@ -41,11 +41,20 @@ export interface Palette {
   ink: string;
 }
 
+export type DateStyle = 'long' | 'short' | 'both';
+export type CrestTreatment = 'auto' | 'none' | 'ring' | 'glow' | 'plate';
+export type ScheduleVariant = 'auto' | 'list' | 'columns' | 'cards' | 'table';
+export type Composition = 'center' | 'compact' | 'asymmetric' | 'impact';
+export type Intensity = 'low' | 'medium' | 'high';
+
 export interface FlyerShow {
-  venue: boolean;
-  day: boolean;
+  tournament: boolean;
   round: boolean;
-  footer: boolean;
+  day: boolean;
+  venue: boolean;
+  homeAway: boolean;
+  slogan: boolean;
+  web: boolean;
 }
 
 export interface FlyerOptions {
@@ -55,6 +64,14 @@ export interface FlyerOptions {
   show: FlyerShow;
   /** Fondo personalizado (dataURL). Si es null se usa el fondo de la plantilla. */
   customBg: string | null;
+  /** Formato de fecha. Por defecto solo largo (sin duplicar). */
+  dateStyle: DateStyle;
+  /** Tratamiento del escudo. `auto` = default de la plantilla. */
+  crest: CrestTreatment;
+  /** Variante de horarios. `auto` = reacomoda hasta mostrar todo antes de resumir. */
+  schedule: ScheduleVariant;
+  composition: Composition;
+  intensity: Intensity;
 }
 
 export interface FlyerRow {
@@ -62,7 +79,7 @@ export interface FlyerRow {
   time: string;
 }
 
-/** Contenido real del fixture. Nada se inventa: todo viene del cruce publicado. */
+/** Contenido real del fixture. Nada se inventa: todo viene del cruce. */
 export interface FlyerContent {
   tournamentName: string;
   roundLabel: string;
@@ -76,10 +93,40 @@ export interface FlyerContent {
   rows: FlyerRow[];
 }
 
-export const DEFAULT_SHOW: FlyerShow = { venue: true, day: true, round: true, footer: true };
+export const DEFAULT_SHOW: FlyerShow = {
+  tournament: true,
+  round: true,
+  day: true,
+  venue: true,
+  homeAway: true,
+  slogan: true,
+  web: true,
+};
 
 export function defaultOptions(): FlyerOptions {
-  return { template: 'matchday-pro', format: 'story', palette: {}, show: { ...DEFAULT_SHOW }, customBg: null };
+  return {
+    template: 'social-bold',
+    format: 'story',
+    palette: {},
+    show: { ...DEFAULT_SHOW },
+    customBg: null,
+    dateStyle: 'long',
+    crest: 'auto',
+    schedule: 'auto',
+    composition: 'center',
+    intensity: 'medium',
+  };
+}
+
+/** Tratamiento de escudo por defecto de cada plantilla. */
+export const TEMPLATE_CREST_DEFAULT: Record<TemplateId, Exclude<CrestTreatment, 'auto'>> = {
+  'editorial-clean': 'plate',
+  'matchday-stadium': 'glow',
+  'social-bold': 'ring',
+};
+
+export function resolveCrest(opts: FlyerOptions): Exclude<CrestTreatment, 'auto'> {
+  return opts.crest === 'auto' ? TEMPLATE_CREST_DEFAULT[opts.template] : opts.crest;
 }
 
 export function flyerFileName(content: FlyerContent, opts: FlyerOptions): string {

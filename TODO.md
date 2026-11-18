@@ -29,12 +29,15 @@ Registro vivo del proyecto. Marcar con `[x]` al completar. Orden = prioridad sug
   publicar → lectura pública `isSoler:true`; 503 honesto en resultados/posiciones; 401 sin token.
 - [x] **Fix fixture vacío**: API expone `_count.matchdays` publicados; el front defaultea al torneo con datos
   y el empty state sugiere otros torneos.
-- [x] **Generador de flyers deportivos v2** (`/admin/flyers` + botón rápido en fixture público/admin):
-  plantillas Matchday Pro / Minimal Premium / Football Energy, formatos historia 9:16,
-  feed 4:5 y cuadrado 1:1 con composición adaptada, vista previa idéntica al PNG (mismo
-  motor Canvas), colores institucionales configurables, toggles de contenido, fondo
-  personalizado, datos 100% del fixture (escudos sin deformar, sin textos cortados).
-  Ruta de verificación `/flyer-lab` solo en dev (matriz 3×3 en e2e).
+- [x] **Generador de flyers deportivos v3** (2da iteración): 3 sistemas visuales distintos
+  (Editorial Clean / Matchday Stadium / Social Bold), secciones configurables
+  (header, duelo, horarios, escudos, fondo), controles en `/admin/flyers`: torneo,
+  fecha (larga/corta/ambas sin duplicar), nº fecha, sede, local/visitante, slogan,
+  web, tratamiento de escudo (sin marco/contorno/glow/placa, sin blanco por defecto),
+  horarios (auto/lista/columnas/tarjetas/tabla con cascada auto), composición
+  (centrada/compacta/asimétrica/impact), intensidad (sobria/media/alta), colores y
+  fondo personalizado. Sin diagonales sobre la info ni textos cortados (lab `/flyer-lab`
+  con matriz 3×3 + variante full por plantilla).
 
 ## Pendiente (en orden)
 
