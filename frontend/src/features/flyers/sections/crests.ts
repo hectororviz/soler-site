@@ -1,13 +1,14 @@
 /**
- * Tratamiento visual del escudo (configurable, sin fondo blanco por defecto).
- * - none: imagen tal cual, solo sombra suave de apoyo.
+ * Tratamiento visual del escudo (configurable, sin contenedor por defecto).
+ * - bare: imagen tal cual, sin marco ni sombras. Máximo protagonismo.
+ * - original: imagen cruda tal cual (respeta su alfa si lo trae).
+ * - none: sombra suave de apoyo, sin contenedor.
  * - ring: contorno fino, interior transparente.
  * - glow: resplandor del color acento, sin base ni marco.
- * - plate: placa minimal (el template aporta el tono, nunca blanco puro).
+ * - plate: placa minimal en tono (nunca blanco puro).
  * - card: tarjeta institucional (placa redondeada con filo superior).
  * - crop: recortado al contenido (sin contenedor).
- * Además: `removeWhiteBackground` vuelve transparente el fondo blanco de las
- * fotos/JPG subidos por los clubes (flood-fill desde los bordes con tolerancia).
+ * - circle: círculo clásico con aro grueso (opcional, para JPG).
  */
 import { DISPLAY } from '../templates/common';
 import type { CrestTreatment } from '../types';
@@ -247,12 +248,12 @@ export function paintCrest(
     ctx.fill();
     ctx.restore();
   }
-  if (treatment === 'plate' || treatment === 'card') {
+  if (treatment === 'plate' || treatment === 'card' || treatment === 'circle') {
     ctx.save();
     ctx.shadowColor = 'rgba(0,0,0,0.35)';
     ctx.shadowBlur = radius * 0.3;
     ctx.shadowOffsetY = radius * 0.06;
-    if (treatment === 'plate') {
+    if (treatment === 'plate' || treatment === 'circle') {
       ctx.beginPath();
       ctx.arc(cx, cy, radius, 0, Math.PI * 2);
       ctx.fillStyle = colors.plate;
@@ -275,8 +276,8 @@ export function paintCrest(
     }
     ctx.restore();
   }
-  if (treatment === 'original') {
-    // Sin modificaciones: imagen cruda tal cual (respeta su alfa si lo trae).
+  if (treatment === 'bare' || treatment === 'original') {
+    // Sin contenedor: imagen cruda tal cual (respeta su alfa si lo trae).
     if (!drawImage(0)) drawMissing();
     return;
   }
@@ -291,7 +292,7 @@ export function paintCrest(
   }
 
   ctx.save();
-  if (treatment === 'plate') {
+  if (treatment === 'plate' || treatment === 'circle') {
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
     ctx.clip();
@@ -304,7 +305,7 @@ export function paintCrest(
     else ctx.rect(cx - s / 2, cy - s / 2, s, s);
     ctx.clip();
   }
-  if (!drawImage(treatment === 'plate' || treatment === 'card' ? 0.34 : 0.16)) {
+  if (!drawImage(treatment === 'plate' || treatment === 'card' || treatment === 'circle' ? 0.34 : 0.16)) {
     drawMissing();
   }
   ctx.restore();
@@ -318,13 +319,13 @@ export function paintCrest(
     ctx.stroke();
     ctx.restore();
   }
-  if (treatment === 'plate') {
+  if (treatment === 'plate' || treatment === 'circle') {
     ctx.save();
     ctx.beginPath();
     ctx.arc(cx, cy, radius, 0, Math.PI * 2);
-    ctx.lineWidth = Math.max(2, radius * 0.03);
+    ctx.lineWidth = treatment === 'circle' ? Math.max(4, radius * 0.09) : Math.max(2, radius * 0.03);
     ctx.strokeStyle = colors.ring;
-    ctx.globalAlpha = 0.5;
+    ctx.globalAlpha = treatment === 'circle' ? 1 : 0.5;
     ctx.stroke();
     ctx.restore();
   }

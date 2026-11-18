@@ -18,6 +18,10 @@ class TournamentDto {
   @IsOptional() @IsString() description?: string;
   @IsOptional() @IsString() externalId?: string;
 }
+class TournamentUpdateDto {
+  @IsOptional() @IsString() name?: string;
+  @IsOptional() @IsString() description?: string;
+}
 class CategoryDto {
   @IsString() tournamentId!: string;
   @IsString() name!: string;
@@ -55,6 +59,9 @@ export class AdminCatalogController {
 
   @Post('tournaments') createTournament(@Body() dto: TournamentDto) {
     return this.catalog.createTournament(dto);
+  }
+  @Patch('tournaments/:id') updateTournament(@Param('id') id: string, @Body() dto: TournamentUpdateDto) {
+    return this.catalog.updateTournament(id, dto);
   }
 
   @Post('categories') createCategory(@Body() dto: CategoryDto) {

@@ -266,8 +266,97 @@ function gridLayout(
   return { hidden };
 }
 
-function tableLayout(
+/**
+ * Lista compacta: categoría y hora en la misma línea, sin cajas.
+ * Solo filetes divisores. Ideal story 9:16 con muchas categorías.
+ */
+function compactLayout(
   ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  regionH: number,
+  rows: { category: string; time: string }[],
+  style: ScheduleStyle,
+  skew: boolean,
+  cols: number,
+  tune: ScheduleTuning = {},
+): { hidden: number } {
+  if (!rows.length) {
+    emptyMsg(ctx, x, y, w, style, skew);
+    return { hidden: 0 };
+  }
+  const rsT = tune.rowScale ?? 1;
+  const catT = tune.catScale ?? 1;
+  const timeT = tune.timeScale ?? 1;
+  const gap = 28;
+  const cw = (w - gap * (cols - 1)) / cols;
+  const sk = skew ? 8 : 0;
+  const perCol = Math.ceil(rows.length / cols);
+  const minR = 40 * rsT;
+  let rh = Math.min(60 * rsT, regionH / Math.max(1, perCol));
+  let items = rows;
+  let hidden = 0;
+  if (rh < minR) {
+    rh = minR;
+    const visRows = Math.max(1, Math.floor(regionH / rh));
+    const capacity = cols * visRows;
+    if (rows.length > capacity) {
+      items = rows.slice(0, Math.max(0, capacity - cols));
+      hidden = rows.length - items.length;
+    }
+  }
+  items.forEach((row, i) => {
+    const col = i % cols;
+    const rIdx = Math.floor(i / cols);
+    const gx = x + col * (cw + gap);
+    const gy = y + rIdx * rh;
+    const cy = gy + rh / 2;
+    // Filete divisor sutil (no caja).
+    if (rIdx > 0 || col > 0) {
+      ctx.save();
+      ctx.fillStyle = style.catColor;
+      ctx.globalAlpha = 0.16;
+      ctx.fillRect(gx + 8, gy - 1, cw - 16, 2);
+      ctx.restore();
+    }
+    const draw = () => {
+      let cs = Math.round(rh * 0.3 * catT);
+      ctx.font = `700 ${cs}px ${DISPLAY}`;
+      const maxCat = cw - 150 - sk * 2;
+      while (cs > 12 && ctx.measureText(row.category.toUpperCase()).width > maxCat) {
+        cs -= 2;
+        ctx.font = `700 ${cs}px ${DISPLAY}`;
+      }
+      ctx.fillStyle = style.catColor;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
+      ctx.fillText(row.category.toUpperCase(), gx + 10 + sk, cy + cs * 0.32);
+      const pending = row.time === 'A confirmar';
+      ctx.fillStyle = pending ? style.timePending : style.timeColor;
+      ctx.font = `800 ${pending ? Math.round(rh * 0.3 * timeT) : Math.round(rh * 0.42 * timeT)}px ${DISPLAY}`;
+      ctx.textAlign = 'right';
+      ctx.fillText(row.time, gx + cw - 10 - sk, cy + rh * 0.16);
+    };
+    if (skew) skewedAt(ctx, gx + cw / 2, cy, draw);
+    else draw();
+  });
+  if (hidden > 0) {
+    const sy = y + Math.ceil(items.length / cols) * rh;
+    if (sy + rh * 0.7 <= y + regionH + 4) {
+      ctx.save();
+      ctx.fillStyle = style.summaryFg;
+      ctx.globalAlpha = 0.75;
+      ctx.font = `800 ${Math.round(rh * 0.3)}px ${DISPLAY}`;
+      ctx.textAlign = 'center';
+      ctx.fillText(`+${hidden} MÁS`, x + w / 2, sy + rh * 0.55);
+      ctx.restore();
+    }
+  }
+  return { hidden };
+}
+
+function tableLayout(  ctx: CanvasRenderingContext2D,
   x: number,
   y: number,
   w: number,
@@ -368,20 +457,29 @@ export function paintSchedule(
       return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 76, 118, force === 1 ? 1 : colsFor(rows.length), true, tune);
     case 'table':
       return tableLayout(ctx, x, y, w, regionH, rows, style, skew, tune);
+    case 'compact':
+      return compactLayout(ctx, x, y, w, regionH, rows, style, skew, tune.cols === 2 ? 2 : 1, tune);
+    case 'compact2':
+      return compactLayout(ctx, x, y, w, regionH, rows, style, skew, tune.cols === 1 ? 1 : 2, tune);
     case 'auto': {
-      // Cascada: lista completa → columnas completas → denso + resumen.
-      const listH = rows.length * minRow;
-      if (force === 1 || rows.length === 0 || listH <= regionH) {
-        if (force === 2) return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, 2, false, tune);
-        return listLayout(ctx, x, y, w, regionH, rows, style, skew, minRow, tune);
+      // Cascada compacta: 1 col densa → 2 col densas → tarjetas + resumen.
+      const rs = tune.rowScale ?? 1;
+      if (force === 1) {
+        return compactLayout(ctx, x, y, w, regionH, rows, style, skew, 1, tune);
+      }
+      if (force === 2) {
+        return compactLayout(ctx, x, y, w, regionH, rows, style, skew, 2, tune);
+      }
+      if (rows.length === 0 || rows.length * 40 * rs <= regionH) {
+        return compactLayout(ctx, x, y, w, regionH, rows, style, skew, 1, tune);
       }
       {
         const cols = 2;
         const perCol = Math.ceil(rows.length / cols);
-        if (perCol * 64 <= regionH) {
-          return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 64, 100, cols, false, tune);
+        if (perCol * 40 * rs <= regionH) {
+          return compactLayout(ctx, x, y, w, regionH, rows, style, skew, cols, tune);
         }
-        return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 58, 92, cols, false, tune);
+        return gridLayout(ctx, x, y, w, regionH, rows, style, skew, 56, 88, cols, false, tune);
       }
     }
   }

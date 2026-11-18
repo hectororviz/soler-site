@@ -45,18 +45,22 @@ const DATE_STYLES: { id: DateStyle; label: string; hint: string }[] = [
 ];
 
 const CREST_TREATMENTS: { id: CrestTreatment; label: string; hint: string }[] = [
-  { id: 'auto', label: 'Auto', hint: 'Default de la plantilla' },
+  { id: 'auto', label: 'Auto', hint: 'Sin contenedor' },
+  { id: 'bare', label: 'Sin contenedor', hint: 'Escudo libre, máximo protagonismo' },
   { id: 'original', label: 'Original', hint: 'Sin modificaciones' },
-  { id: 'none', label: 'Transparente', hint: 'Canal alfa + sombra suave' },
+  { id: 'none', label: 'Sombra suave', hint: 'Realce sutil sin encerrar' },
   { id: 'ring', label: 'Contorno', hint: 'Anillo fino, interior transparente' },
-  { id: 'glow', label: 'Sombra', hint: 'Resplandor sin encerrar' },
-  { id: 'plate', label: 'Placa', hint: 'Placa minimal en tono' },
+  { id: 'glow', label: 'Glow institucional', hint: 'Resplandor sin encerrar' },
+  { id: 'plate', label: 'Placa sutil', hint: 'Soporte minimal en tono' },
   { id: 'card', label: 'Tarjeta', hint: 'Tarjeta institucional' },
   { id: 'crop', label: 'Recortado', hint: 'Recorta márgenes, sin contenedor' },
+  { id: 'circle', label: 'Círculo', hint: 'Aro clásico (opcional)' },
 ];
 
 const SCHEDULE_VARIANTS: { id: ScheduleVariant; label: string }[] = [
   { id: 'auto', label: 'Auto' },
+  { id: 'compact', label: 'Compacta' },
+  { id: 'compact2', label: 'Compacta 2 col' },
   { id: 'list', label: 'Lista' },
   { id: 'columns', label: 'Columnas' },
   { id: 'cards', label: 'Tarjetas' },

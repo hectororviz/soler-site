@@ -22,6 +22,15 @@ export function TournamentsPage() {
       .finally(() => setPending(false));
   };
 
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState('');
+
+  const saveName = (id: string) => {
+    if (!editingName.trim()) return;
+    w.run(() => api.patch(`/admin/tournaments/${id}`, { name: editingName.trim() }, { admin: true }), ['admin-tournaments'])
+      .then(() => setEditingId(null));
+  };
+
   return (
     <AdminPage title="Torneos" desc="Competiciones por temporada. El slug se genera solo.">
       <Panel title="Nuevo torneo">
@@ -46,10 +55,31 @@ export function TournamentsPage() {
             <ul className="divide-y divide-line">
               {list.data!.map((t) => (
                 <li key={t.id} className="flex flex-wrap items-center justify-between gap-2 py-2.5">
-                  <span>
-                    <Link to={`/admin/torneos/${t.id}`} className="font-semibold text-primary hover:underline">{t.name}</Link>
-                    <span className="ml-2 text-sm text-ink-muted">{t.season?.label} · {t.categories.length} categorías · /{t.slug}</span>
-                  </span>
+                  {editingId === t.id ? (
+                    <span className="flex flex-1 flex-wrap items-center gap-2">
+                      <input
+                        className={inputCls}
+                        value={editingName}
+                        onChange={(e) => setEditingName(e.target.value)}
+                        aria-label="Nombre del torneo"
+                        autoFocus
+                      />
+                      <button onClick={() => saveName(t.id)} className="inline-flex h-11 items-center rounded-card bg-pitch px-4 font-bold text-white">
+                        Guardar
+                      </button>
+                      <button onClick={() => setEditingId(null)} className="inline-flex h-11 items-center rounded-card border border-line px-4">
+                        Cancelar
+                      </button>
+                    </span>
+                  ) : (
+                    <span>
+                      <Link to={`/admin/torneos/${t.id}`} className="font-semibold text-primary hover:underline">{t.name}</Link>
+                      <span className="ml-2 text-sm text-ink-muted">{t.season?.label} · {t.categories.length} categorías · /{t.slug}</span>
+                      <button onClick={() => { setEditingId(t.id); setEditingName(t.name); }} className="ml-3 text-sm font-semibold text-ink-muted hover:text-primary">
+                        Renombrar
+                      </button>
+                    </span>
+                  )}
                   <Link to={`/admin/fixture?torneo=${t.slug}`} className="text-sm font-semibold text-ink-muted hover:text-primary">
                     Ir al fixture →
                   </Link>

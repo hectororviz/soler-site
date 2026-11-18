@@ -95,7 +95,7 @@ test('flyers: matriz plantillas × formatos renderiza y exporta', async ({ page 
   await expect.poll(async () => page.title(), { timeout: 60_000 }).toBe('flyer-lab-done');
   const raw = await page.locator('#flyer-lab-results').textContent();
   const results = JSON.parse(raw ?? '[]') as Array<{ template: string; format: string; w: number; h: number; ok: boolean }>;
-  expect(results).toHaveLength(13);
+  expect(results).toHaveLength(16);
   for (const r of results) {
     expect(r.ok, `${r.template}/${r.format}`).toBe(true);
   }

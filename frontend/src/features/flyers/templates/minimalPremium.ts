@@ -4,7 +4,7 @@
  * flotantes según tratamiento. Horarios refinados con líderes de puntos.
  */
 import type { FlyerContent, FlyerOptions, Palette } from '../types';
-import { FORMATS } from '../types';
+import { FORMATS, resolveCrest } from '../types';
 import {
   DISPLAY,
   SANS,
@@ -204,7 +204,7 @@ export function renderMinimalPremium(
   };
 
   const matchup = (cy: number, r: number, nameY: number) => {
-    const treat = opts.crest === 'auto' ? 'plate' : opts.crest;
+    const treat = resolveCrest(opts);
     const colors = { ring: ink, glow: ink, plate: '#EAE4D6', plateInk: ink };
     const lx = asym ? 320 : opts.format === 'square' ? 300 : 300;
     const rx = asym ? 760 : w - lx;

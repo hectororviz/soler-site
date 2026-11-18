@@ -4,7 +4,7 @@
  * (transparentes + glow, nunca base blanca). Sin diagonales sobre la info.
  */
 import type { FlyerContent, FlyerOptions, Palette } from '../types';
-import { FORMATS } from '../types';
+import { FORMATS, resolveCrest } from '../types';
 import {
   DISPLAY,
   SANS,
@@ -259,7 +259,7 @@ export function renderMatchdayPro(
   };
 
   const matchup = (crestY: number, crestR: number, nameY: number, tagY: number) => {
-    const treat = opts.crest === 'auto' ? 'glow' : opts.crest;
+    const treat = resolveCrest(opts);
     const colors = { ring: p.accent, glow: p.primary, plate: 'rgba(255,255,255,0.08)', plateInk: '#ffffff' };
     const lx = asym ? Math.round(w * 0.32) : 300;
     const rx = asym ? Math.round(w * 0.76) : w - 300;

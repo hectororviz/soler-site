@@ -50,6 +50,12 @@ export function FlyerLab() {
       const full = demoContent(true);
       const stress = demoContent(false);
       for (const t of TEMPLATES) {
+        const tIdx = TEMPLATES.indexOf(t);
+        const extra2 = [
+          { crest: 'ring', schedule: 'list' },
+          { crest: 'glow', schedule: 'columns' },
+          { crest: 'crop', schedule: 'cards' },
+        ][tIdx % 3] as { crest: 'ring' | 'glow' | 'crop'; schedule: 'list' | 'columns' | 'cards' };
         const combos: { opts: FlyerOptions; content: FlyerContent; tag: string }[] = [
           ...Object.values(FORMATS).map((f) => ({
             opts: { ...defaultOptions(), template: t.id, format: f.id },
@@ -65,13 +71,28 @@ export function FlyerLab() {
               format: 'story',
               composition: 'asymmetric',
               dateStyle: 'both',
-              crest: 'plate',
-              schedule: 'table',
+              crest: 'circle',
+              schedule: t.id === 'editorial-clean' ? 'compact' : t.id === 'matchday-stadium' ? 'compact2' : 'table',
               intensity: 'high',
               show: { tournament: true, round: true, day: true, venue: true, homeAway: true, slogan: true, web: true },
             },
             content: stress,
             tag: `${t.id} / story / full`,
+          },
+          {
+            opts: {
+              ...defaultOptions(),
+              template: t.id,
+              format: 'story',
+              composition: 'center',
+              dateStyle: 'long',
+              crest: extra2.crest,
+              schedule: extra2.schedule,
+              intensity: 'medium',
+              show: { tournament: true, round: true, day: true, venue: true, homeAway: true, slogan: true, web: true },
+            },
+            content: full,
+            tag: `${t.id} / story / alt`,
           },
         ];
         for (const c of combos) {

@@ -48,6 +48,16 @@ export class CatalogService {
       data: { ...data, slug: data.slug ?? slugify(data.name) },
     });
   }
+  /** Renombra sin tocar el slug (URLs del fixture intactas). */
+  async updateTournament(id: string, data: { name?: string; description?: string | null }) {
+    if (data.name !== undefined && !data.name.trim()) throw new BadRequestException('Nombre inválido.');
+    const clean: any = {};
+    if (data.name !== undefined) clean.name = data.name.trim();
+    if (data.description !== undefined) clean.description = data.description || null;
+    return this.prisma.tournament.update({ where: { id }, data: clean }).catch(() => {
+      throw new NotFoundException('Torneo inexistente.');
+    });
+  }
 
   // ---- Categories ----
   categories(tournamentId: string) {

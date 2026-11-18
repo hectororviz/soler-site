@@ -3,7 +3,7 @@
  * jerarquía clara, ruido controlado (las diagonales enmarcan, no invaden).
  */
 import type { FlyerContent, FlyerOptions, FormatId, Palette } from '../types';
-import { FORMATS } from '../types';
+import { FORMATS, resolveCrest } from '../types';
 import {
   DISPLAY,
   SANS,
@@ -291,7 +291,7 @@ export function renderSocialBold(
 
   // ---- Enfrentamiento ----
   const matchup = (crestScaleY: number, venueY: number | null) => {
-    const treat = opts.crest === 'auto' ? 'ring' : opts.crest;    const colors = { ring: p.accent, glow: p.primary, plate: 'rgba(255,255,255,0.10)', plateInk: '#ffffff' };
+    const treat = resolveCrest(opts);    const colors = { ring: p.accent, glow: p.primary, plate: 'rgba(255,255,255,0.10)', plateInk: '#ffffff' };
     paintCrest(ctx, assets.home, L.crestLX - lay.crestGap / 2, crestScaleY, Math.round(L.crestR * lay.crestHome), content.homeName, treat, colors);
     paintCrest(ctx, assets.away, L.crestRX + lay.crestGap / 2, L.awayY, Math.round(L.awayR * lay.crestAway), content.awayName, treat, colors);
     const vsR = Math.round(L.crestR * (opts.composition === 'impact' ? 0.5 : 0.46) * lay.vsScale);

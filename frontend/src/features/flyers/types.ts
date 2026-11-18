@@ -42,8 +42,8 @@ export interface Palette {
 }
 
 export type DateStyle = 'long' | 'short' | 'both';
-export type CrestTreatment = 'auto' | 'original' | 'none' | 'ring' | 'glow' | 'plate' | 'card' | 'crop';
-export type ScheduleVariant = 'auto' | 'list' | 'columns' | 'cards' | 'table';
+export type CrestTreatment = 'auto' | 'original' | 'bare' | 'none' | 'ring' | 'glow' | 'plate' | 'card' | 'crop' | 'circle';
+export type ScheduleVariant = 'auto' | 'list' | 'columns' | 'cards' | 'table' | 'compact' | 'compact2';
 export type Composition = 'center' | 'compact' | 'asymmetric' | 'impact';
 export type Intensity = 'low' | 'medium' | 'high';
 export type Density = 'compact' | 'balanced' | 'airy';
@@ -199,11 +199,11 @@ export function defaultOptions(): FlyerOptions {
   };
 }
 
-/** Tratamiento de escudo por defecto de cada plantilla. */
+/** Tratamiento de escudo por defecto: sin contenedor (máximo protagonismo). */
 export const TEMPLATE_CREST_DEFAULT: Record<TemplateId, Exclude<CrestTreatment, 'auto'>> = {
-  'editorial-clean': 'plate',
-  'matchday-stadium': 'glow',
-  'social-bold': 'ring',
+  'editorial-clean': 'bare',
+  'matchday-stadium': 'bare',
+  'social-bold': 'bare',
 };
 
 export function resolveCrest(opts: FlyerOptions): Exclude<CrestTreatment, 'auto'> {
